@@ -1,14 +1,24 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useHRMS } from '../../context/HRMSContext';
-import { Users, CalendarClock, DollarSign, Clock, Check, X, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Users, CalendarClock, DollarSign, Clock, Search, Plus, Settings, Plane, Briefcase } from 'lucide-react';
 
 export default function AdminDashboard() {
-  const { employees, leaveRequests, attendanceLogs, approveLeave, rejectLeave } = useHRMS();
+  const { employees, leaveRequests, attendanceLogs, addEmployee, approveLeave, rejectLeave, getEmployeeStatus } = useHRMS();
+  const [search, setSearch] = useState('');
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [form, setForm] = useState({ first_name: '', last_name: '', email: '', department: 'General', job_title: '' });
 
   const todayStr = new Date().toISOString().split('T')[0];
-  const todayCheckins = attendanceLogs.filter(log => log.date === todayStr).length;
-  const pendingLeaves = leaveRequests.filter(req => req.status === 'Pending');
+  const todayCheckins = attendanceLogs.filter((log) => log.date === todayStr).length;
+  const pendingLeaves = leaveRequests.filter((req) => req.status === 'Pending');
   const totalSalaryBudget = employees.reduce((acc, curr) => acc + curr.salary, 0);
   const presentRate = employees.length > 0 ? Math.round((todayCheckins / employees.length) * 100) : 0;
+
+  const filteredEmployees = employees.filter((employee) => {
+    const term = search.toLowerCase();
+    return !term || [employee.name, employee.email, employee.department, employee.job_title].join(' ').toLowerCase().includes(term);
+  });
 
   const stats = [
     { name: 'Total Employees', value: employees.length, icon: Users, color: '#714B67', bg: '#F3EDF2' },
@@ -17,25 +27,56 @@ export default function AdminDashboard() {
     { name: 'Present Today', value: `${todayCheckins} / ${employees.length}`, icon: Clock, color: '#0C5460', bg: '#D1ECF1' },
   ];
 
+  const handleAddEmployee = (event) => {
+    event.preventDefault();
+    const res = addEmployee({
+      first_name: form.first_name,
+      last_name: form.last_name,
+      email: form.email,
+      department: form.department,
+      job_title: form.job_title,
+      salary: 40000,
+    });
+    if (res.success) {
+      setForm({ first_name: '', last_name: '', email: '', department: 'General', job_title: '' });
+      setShowAddForm(false);
+    }
+  };
+
   return (
     <div className="space-y-6 odoo-fade-in">
-      {/* Welcome strip */}
-      <div className="o-card p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="o-card p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold" style={{ color: 'var(--odoo-text)' }}>Admin Dashboard</h2>
+          <h2 className="text-lg font-bold" style={{ color: 'var(--odoo-text)' }}>Employees</h2>
           <p className="text-sm mt-0.5" style={{ color: 'var(--odoo-text-muted)' }}>
-            Overview of HR operations, employee records, and pending actions.
+            View the full directory, check live presence, and manage onboarding from one place.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="o-badge o-badge-purple">
-            <Clock className="h-3 w-3 mr-1" />
-            {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
-          </span>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <label className="relative block">
+            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--odoo-text-muted)' }} />
+            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search employees" className="o-input pl-9" />
+          </label>
+          <button onClick={() => setShowAddForm((value) => !value)} className="o-btn-primary shrink-0">
+            <Plus className="h-4 w-4" /> New
+          </button>
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {showAddForm && (
+        <div className="o-card p-5">
+          <h3 className="font-bold text-[15px] mb-4" style={{ color: 'var(--odoo-text)' }}>Add Employee</h3>
+          <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleAddEmployee}>
+            <input required value={form.first_name} onChange={(event) => setForm((value) => ({ ...value, first_name: event.target.value }))} placeholder="First name" className="o-input" />
+            <input required value={form.last_name} onChange={(event) => setForm((value) => ({ ...value, last_name: event.target.value }))} placeholder="Last name" className="o-input" />
+            <input required type="email" value={form.email} onChange={(event) => setForm((value) => ({ ...value, email: event.target.value }))} placeholder="Email" className="o-input" />
+            <input value={form.job_title} onChange={(event) => setForm((value) => ({ ...value, job_title: event.target.value }))} placeholder="Job title" className="o-input" />
+            <input value={form.department} onChange={(event) => setForm((value) => ({ ...value, department: event.target.value }))} placeholder="Department" className="o-input" />
+            <button className="o-btn-primary md:col-span-2" type="submit">Create Employee</button>
+          </form>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => {
           const Icon = stat.icon;
@@ -54,131 +95,83 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Pending Leave Approvals */}
         <div className="lg:col-span-2 o-card flex flex-col">
           <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'var(--odoo-border-light)' }}>
             <h3 className="font-bold text-[15px]" style={{ color: 'var(--odoo-text)' }}>Pending Leave Requests</h3>
-            {pendingLeaves.length > 0 && (
-              <span className="o-badge o-badge-warning">{pendingLeaves.length} pending</span>
-            )}
+            {pendingLeaves.length > 0 && <span className="o-badge o-badge-warning">{pendingLeaves.length} pending</span>}
           </div>
-
-          <div className="flex-1 overflow-y-auto max-h-[400px]">
+          <div className="flex-1 overflow-y-auto max-h-[320px]">
             {pendingLeaves.length === 0 ? (
-              <div className="p-8 text-center" style={{ color: 'var(--odoo-text-muted)' }}>
-                <Check className="h-10 w-10 mx-auto mb-2 opacity-30" />
-                <p className="text-sm font-medium">All leave requests have been processed.</p>
-              </div>
-            ) : (
-              <div className="divide-y" style={{ borderColor: 'var(--odoo-border-light)' }}>
-                {pendingLeaves.map((req) => (
-                  <div key={req.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-gray-50 transition-colors">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-sm" style={{ color: 'var(--odoo-text)' }}>{req.employeeName}</span>
-                        <span className="o-badge o-badge-purple text-[11px]">{req.type}</span>
-                      </div>
-                      <p className="text-xs" style={{ color: 'var(--odoo-text-muted)' }}>
-                        {req.startDate} → {req.endDate} · "{req.reason}"
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button onClick={() => approveLeave(req.id)} className="o-btn-success text-xs py-1.5 px-3">
-                        <Check className="h-3.5 w-3.5" /> Approve
-                      </button>
-                      <button onClick={() => rejectLeave(req.id)} className="o-btn-secondary text-xs py-1.5 px-3" style={{ color: 'var(--odoo-danger)', borderColor: 'var(--odoo-danger)' }}>
-                        <X className="h-3.5 w-3.5" /> Reject
-                      </button>
-                    </div>
+              <div className="p-8 text-center text-sm" style={{ color: 'var(--odoo-text-muted)' }}>No pending approvals.</div>
+            ) : pendingLeaves.map((req) => (
+              <div key={req.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-gray-50 transition-colors">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-medium text-sm" style={{ color: 'var(--odoo-text)' }}>{req.employeeName}</span>
+                    <span className="o-badge o-badge-purple text-[11px]">{req.type}</span>
                   </div>
-                ))}
+                  <p className="text-xs" style={{ color: 'var(--odoo-text-muted)' }}>{req.startDate} → {req.endDate}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => approveLeave(req.id)} className="o-btn-success text-xs py-1.5 px-3">Approve</button>
+                  <button onClick={() => rejectLeave(req.id)} className="o-btn-secondary text-xs py-1.5 px-3">Reject</button>
+                </div>
               </div>
-            )}
+            ))}
           </div>
         </div>
 
-        {/* Right column: quick metrics */}
-        <div className="o-card p-5 space-y-5">
-          <h3 className="font-bold text-[15px] border-b pb-3" style={{ color: 'var(--odoo-text)', borderColor: 'var(--odoo-border-light)' }}>Summary</h3>
-
-          <div className="space-y-4">
+        <div className="o-card p-5 space-y-4">
+          <h3 className="font-bold text-[15px] border-b pb-3" style={{ color: 'var(--odoo-text)', borderColor: 'var(--odoo-border-light)' }}>Team Snapshot</h3>
+          <div className="space-y-3">
             <div className="flex items-center justify-between text-sm">
               <span style={{ color: 'var(--odoo-text-muted)' }}>Attendance Rate</span>
               <span className="font-bold" style={{ color: 'var(--odoo-text)' }}>{presentRate}%</span>
             </div>
             <div className="w-full rounded-full h-2" style={{ background: 'var(--odoo-border-light)' }}>
-              <div className="h-2 rounded-full transition-all" style={{ width: `${presentRate}%`, background: 'var(--odoo-teal)' }}></div>
+              <div className="h-2 rounded-full" style={{ width: `${presentRate}%`, background: 'var(--odoo-teal)' }}></div>
             </div>
           </div>
-
-          <div className="space-y-3 pt-2">
-            {[
-              { label: 'Engineering', val: employees.filter(e => e.department === 'Engineering').length },
-              { label: 'Human Resources', val: employees.filter(e => e.department === 'Human Resources').length },
-              { label: 'Operations', val: employees.filter(e => e.department === 'Operations').length },
-            ].map((dep) => (
-              <div key={dep.label} className="flex items-center justify-between text-sm">
-                <span style={{ color: 'var(--odoo-text-muted)' }}>{dep.label}</span>
-                <span className="font-medium" style={{ color: 'var(--odoo-text)' }}>{dep.val} staff</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="pt-3 border-t" style={{ borderColor: 'var(--odoo-border-light)' }}>
-            <div className="flex items-center justify-between text-sm">
-              <span style={{ color: 'var(--odoo-text-muted)' }}>Admins</span>
-              <span className="font-medium" style={{ color: 'var(--odoo-text)' }}>{employees.filter(e => e.role === 'Admin').length}</span>
-            </div>
+          <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--odoo-text-muted)' }}>
+            <Briefcase className="h-4 w-4" /> {employees.filter((employee) => employee.department === 'Engineering').length} engineers active
           </div>
         </div>
       </div>
 
-      {/* Employee Directory Table */}
-      <div className="o-card overflow-hidden">
-        <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'var(--odoo-border-light)' }}>
+      <div className="o-card p-5">
+        <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-[15px]" style={{ color: 'var(--odoo-text)' }}>Employee Directory</h3>
-          <span className="text-xs font-medium" style={{ color: 'var(--odoo-text-muted)' }}>{employees.length} records</span>
+          <span className="text-xs font-medium" style={{ color: 'var(--odoo-text-muted)' }}>{filteredEmployees.length} people</span>
         </div>
-        <div className="overflow-x-auto">
-          <table className="o-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Employee</th>
-                <th>Role</th>
-                <th>Department</th>
-                <th>Join Date</th>
-                <th className="text-right">Salary</th>
-              </tr>
-            </thead>
-            <tbody>
-              {employees.map((emp) => (
-                <tr key={emp.id}>
-                  <td className="font-mono font-medium">{emp.id}</td>
-                  <td>
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{ background: emp.role === 'Admin' ? 'var(--odoo-purple)' : 'var(--odoo-teal)' }}>
-                        {emp.name.charAt(0)}
-                      </div>
-                      <div>
-                        <span className="font-medium">{emp.name}</span>
-                        <p className="text-xs" style={{ color: 'var(--odoo-text-muted)' }}>{emp.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <span className={`o-badge ${emp.role === 'Admin' ? 'o-badge-purple' : 'o-badge-info'}`}>
-                      {emp.role}
-                    </span>
-                  </td>
-                  <td>{emp.department}</td>
-                  <td>{emp.joinDate}</td>
-                  <td className="text-right font-medium">${emp.salary.toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="emp-grid">
+          {filteredEmployees.map((employee) => {
+            const status = getEmployeeStatus(employee.employee_id);
+            return (
+              <Link key={employee.id} to={`/profile/${employee.employee_id}`} className="emp-card">
+                <div className="absolute top-3 right-3">
+                  {status === 'present' && <span className="status-dot status-dot--present" />}
+                  {status === 'leave' && <span className="status-dot status-dot--leave"><Plane className="h-2.5 w-2.5" /></span>}
+                  {status === 'absent' && <span className="status-dot status-dot--absent" />}
+                </div>
+                {employee.profile_picture_url ? (
+                  <img src={employee.profile_picture_url} alt={employee.name} className="emp-card-avatar" />
+                ) : (
+                  <div className="emp-card-avatar-fallback" style={{ background: 'var(--odoo-purple)' }}>{employee.name.charAt(0)}</div>
+                )}
+                <div className="min-w-0">
+                  <p className="font-semibold text-sm truncate" style={{ color: 'var(--odoo-text)' }}>{employee.name}</p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--odoo-text-muted)' }}>{employee.job_title || employee.department}</p>
+                  <p className="text-[11px] mt-2 inline-flex rounded-full px-2 py-0.5" style={{ background: 'var(--odoo-purple-muted)', color: 'var(--odoo-purple)' }}>{employee.department}</p>
+                </div>
+              </Link>
+            );
+          })}
         </div>
+      </div>
+
+      <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--odoo-text-muted)' }}>
+        <Settings className="h-4 w-4" />
+        <Link to="/profile" className="hover:underline" style={{ color: 'var(--odoo-purple)' }}>Settings</Link>
       </div>
     </div>
   );
