@@ -30,13 +30,15 @@ import { useUser } from "@clerk/clerk-react";
 
 function ProtectedRoute({ children }) {
 
-const { employee } = useHRMS();
+  const { isLoaded, isSignedIn } = useUser();
 
-if (!employee)
-   return <Navigate to="/login" replace />;
+  if (!isLoaded) return null;
 
-return children;
+  if (!isSignedIn) {
+    return <Navigate to="/login" replace />;
+  }
 
+  return children;
 }
 
 function MainLayout() {
@@ -199,15 +201,16 @@ function MainLayout() {
 }
 
 function MainApp() {
-  const { employee } = useHRMS();
+  const { isLoaded, isSignedIn } = useUser();
+  if (!isLoaded) return null;
   return (
     <Router>
       <Routes>
         <Route path="/login" element={
-          employee ? <Navigate to="/dashboard" replace /> : <Login />
+          isSignedIn ? <Navigate to="/dashboard" replace /> : <Login />
         } />
         <Route path="/signup" element={
-          employee ? <Navigate to="/dashboard" replace /> : <Signup />
+          isSignedIn ? <Navigate to="/dashboard" replace /> : <Signup />
         } />
         <Route path="/*" element={
           <ProtectedRoute>

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useUser } from "@clerk/clerk-react";
 
+
 const HRMSContext = createContext();
 
 const normalizeEmployee = (e = {}) => {
@@ -82,6 +83,8 @@ const initialLeaveRequests = [
   { id: 'LR004', employeeId: 'EMP008', employeeName: 'Anita Desai', type: 'Sick Leave', startDate: '2026-07-03', endDate: '2026-07-04', reason: 'Flu recovery', status: 'Approved', submittedAt: '2026-07-02' },
 ];
 
+
+
 const today = new Date().toISOString().split('T')[0];
 
 const initialAttendanceLogs = [
@@ -106,7 +109,7 @@ const initialPayrollSlips = [
 ];
 
 export const HRMSProvider = ({ children }) => {
-  const [employee, setemployee] = useState(() => {
+  const [employee, setEmployee] = useState(() => {
     const saved = localStorage.getItem('hrms_current_user');
     const parsed = saved ? JSON.parse(saved) : null;
     return parsed ? normalizeEmployee(parsed) : null;
@@ -116,6 +119,12 @@ export const HRMSProvider = ({ children }) => {
     const p = s ? JSON.parse(s) : initialEmployees;
     return Array.isArray(p) ? p.map(normalizeEmployee) : initialEmployees;
   });
+  const teamMembers = employees;
+  const [attendance, setAttendance] = useState([]);
+ 
+  
+  
+  const [isClockedIn, setIsClockedIn] = useState(false);
 
   const { user, isLoaded } = useUser();
   
@@ -138,19 +147,19 @@ export const HRMSProvider = ({ children }) => {
   });
 
   useEffect(() => {
-  const fetchEmployee = async () => {
-    if (!isLoaded || !user) return;
+  if (!isLoaded || !user) return;
 
-    const email = user.primaryEmailAddress?.emailAddress;
+  const email = user.primaryEmailAddress?.emailAddress;
 
-    const res = await fetch(`/api/employees/by-email/${email}`);
-    const data = await res.json();
+  const emp = employees.find(
+    e => e.email.toLowerCase() === email?.toLowerCase()
+  );
 
-    setEmployee(data);
-  };
+  if (emp) {
+    setEmployee(normalizeEmployee(emp));
+  }
 
-  fetchEmployee();
-}, [user, isLoaded]);
+}, [user, isLoaded, employees]);
 
   useEffect(() => {
     localStorage.setItem('hrms_employees', JSON.stringify(employees));
@@ -167,13 +176,19 @@ export const HRMSProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('hrms_payroll', JSON.stringify(payrollSlips));
   }, [payrollSlips]);
+  useEffect(() => {
+  localStorage.setItem(
+    'hrms_checkedin_at',
+    checkedInAt || ''
+  );
+}, [checkedInAt]);
 
   // Auth Operations
   const login = (email, password) => {
     const emp = employees.find(e => e.email.toLowerCase() === email.toLowerCase());
     if (emp) {
       const normalizedEmp = normalizeEmployee(emp);
-      setemployee(normalizedEmp);
+      setEmployee(normalizedEmp);
       localStorage.setItem('hrms_current_user', JSON.stringify(normalizedEmp));
       return { success: true };
     }
@@ -181,7 +196,7 @@ export const HRMSProvider = ({ children }) => {
   };
 
   const logout = () => {
-    setemployee(null);
+    setEmployee(null);
     localStorage.removeItem('hrms_current_user');
   };
 
@@ -205,7 +220,7 @@ export const HRMSProvider = ({ children }) => {
 
     const updated = [...employees, newEmp];
     setEmployees(updated.map(normalizeEmployee));
-    setemployee(newEmp);
+    setEmployee(newEmp);
     localStorage.setItem('hrms_current_user', JSON.stringify(newEmp));
     return { success: true };
   };
@@ -248,6 +263,8 @@ export const HRMSProvider = ({ children }) => {
     };
 
     setAttendanceLogs([newLog, ...attendanceLogs]);
+    setCheckedInAt(new Date().toISOString());
+    setIsClockedIn(true);
     return { success: true, log: newLog };
   };
 
@@ -266,9 +283,10 @@ export const HRMSProvider = ({ children }) => {
     const hoursWorked = '8.2 hrs';
 
     const updated = [...attendanceLogs];
-    updated[idx] = { ...updated[idx], checkOut: time, hoursWorked: '8.2 hrs' };
+    updated[logIndex] = { ...updated[logIndex], checkOut: timeString, hoursWorked: '8.2 hrs' };
     setAttendanceLogs(updated);
     setCheckedInAt(null);
+    setIsClockedIn(false);
     return { success: true };
   };
 
@@ -295,7 +313,7 @@ export const HRMSProvider = ({ children }) => {
   const rejectLeave = (id) => setLeaveRequests((prev) => prev.map((req) => req.id === id ? { ...req, status: 'Rejected' } : req));
 
   const processPayroll = () => {
-    if (!currentUser || currentUser.role !== 'ADMIN') return { success: false, message: 'Only admins can process payroll.' };
+    if (!employee || employee.role !== 'ADMIN') return { success: false, message: 'Only admins can process payroll.' };
     const generated = employees.map((employee) => ({
       id: `P${Date.now()}-${employee.id}`,
       employeeId: employee.employee_id,
@@ -323,17 +341,17 @@ export const HRMSProvider = ({ children }) => {
     });
 
     setEmployees(prev => prev.map(emp => emp.id === employee.id ? updatedEmp : emp));
-    setemployee(updatedEmp);
+    setEmployee(updatedEmp);
     localStorage.setItem('hrms_current_user', JSON.stringify(updatedEmp));
     return { success: true };
   };
 
   const getEmployeeStatus = (empId) => {
-    const currentLog = attendanceLogs.find((log) => log.employeeId === empId && log.date === todayStr && log.checkIn && !log.checkOut);
+    const currentLog = attendanceLogs.find((log) => log.employeeId === empId && log.date === today && log.checkIn && !log.checkOut);
     if (currentLog) return 'present';
-    const checkedOutLog = attendanceLogs.find((log) => log.employeeId === empId && log.date === todayStr && log.checkOut);
+    const checkedOutLog = attendanceLogs.find((log) => log.employeeId === empId && log.date === today && log.checkOut);
     if (checkedOutLog) return 'present';
-    const onLeave = leaveRequests.find((leave) => leave.employeeId === empId && leave.status === 'Approved' && leave.startDate <= todayStr && leave.endDate >= todayStr);
+    const onLeave = leaveRequests.find((leave) => leave.employeeId === empId && leave.status === 'Approved' && leave.startDate <= today && leave.endDate >= today);
     if (onLeave) return 'leave';
     return 'absent';
   };
@@ -346,7 +364,10 @@ export const HRMSProvider = ({ children }) => {
       attendanceLogs,
       payrollSlips,
       avatarColors,
+      teamMembers,
+      attendance,
       
+      isClockedIn,
       
       checkedInAt,
       login,

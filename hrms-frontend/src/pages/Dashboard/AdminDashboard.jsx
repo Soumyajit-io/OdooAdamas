@@ -9,8 +9,8 @@ export default function AdminDashboard() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [form, setForm] = useState({ first_name: '', last_name: '', email: '', department: 'General', job_title: '' });
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const todayCheckins = attendanceLogs.filter((log) => log.date === todayStr).length;
+  const today = new Date().toISOString().split('T')[0];
+  const todayCheckins = attendanceLogs.filter((log) => log.date === today).length;
   const pendingLeaves = leaveRequests.filter((req) => req.status === 'Pending');
   const totalSalaryBudget = employees.reduce((acc, curr) => acc + curr.salary, 0);
   const presentRate = employees.length > 0 ? Math.round((todayCheckins / employees.length) * 100) : 0;

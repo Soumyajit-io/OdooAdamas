@@ -16,7 +16,11 @@ ReactDOM.createRoot(
  <React.StrictMode>
 
   
-   <ClerkProvider publishableKey={clerkPubKey} afterSignInUrl="/dashboard" afterSignUpUrl="/dashboard">
+    <ClerkProvider
+  publishableKey={clerkPubKey}
+  signInFallbackRedirectUrl="/dashboard"
+  signUpFallbackRedirectUrl="/dashboard"
+>
       <App />
    </ClerkProvider>
 
