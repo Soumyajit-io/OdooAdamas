@@ -4,12 +4,22 @@ import { CalendarDays, CheckCircle, AlertTriangle, Clock3, Clock, ChevronLeft, C
 
 export default function Attendance() {
   const {
-  employee,
-  employees,
-  teamMembers,
-  attendanceLogs,leaveRequests,selectedDate,currentUser
+    employee,
+    employees,
+    attendanceLogs,
+    leaveRequests,
+    selectedDate,
+    setSelectedDate,
+    currentUser,
+  } = useHRMS();
 
-} = useHRMS();
+  const isAdmin = employee?.role?.toUpperCase() === 'ADMIN';
+
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
+
   const myLogs = attendanceLogs.filter(log => log.employeeId === employee?.employee_id);
 
   const totalDays = myLogs.length;
