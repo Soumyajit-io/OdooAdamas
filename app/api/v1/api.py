@@ -1,5 +1,6 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import webhooks, users, attendance, leaves, payroll
+
+from app.api.v1.endpoints import attendance, leaves, payroll, users, webhooks
 
 api_router = APIRouter()
 

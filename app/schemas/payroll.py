@@ -1,7 +1,9 @@
-from pydantic import BaseModel
-from typing import Optional
 from datetime import date
+from typing import Optional
 from uuid import UUID
+
+from pydantic import BaseModel
+
 
 class PayrollResponse(BaseModel):
     id: UUID
@@ -12,6 +14,7 @@ class PayrollResponse(BaseModel):
     net_salary: float
     pay_period_start: date
     pay_period_end: date
+
 
 class PayrollUpdateAdmin(BaseModel):
     base_salary: Optional[float] = None

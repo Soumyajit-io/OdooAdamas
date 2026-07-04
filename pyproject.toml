@@ -13,3 +13,23 @@ dependencies = [
     "pyjwt>=2.8.0",
 ]
 
+[tool.ruff]
+# Target modern Python environment, format with standard 88-character line length
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+# Enable pycodestyle (E, W), Pyflakes (F), and isort (I) for import sorting
+select = ["E", "F", "I", "W"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# Allow unused imports in __init__.py files
+"__init__.py" = ["F401"]
+
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.20",
+]
+
