@@ -1,8 +1,10 @@
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlmodel import Session, select
 
-from app.api.deps import get_current_admin, get_current_user
+from app.api.deps import get_current_admin, get_current_user, get_session
+from app.models import User
 from app.schemas.user import (
     UserBasicInfo,
     UserResponse,
@@ -12,78 +14,67 @@ from app.schemas.user import (
 
 router = APIRouter()
 
-
 @router.get("/me", response_model=UserResponse)
-async def get_own_profile(current_user: UserResponse = Depends(get_current_user)):
+async def get_own_profile(
+    current_user: User = Depends(get_current_user)
+):
     """
     Fetches the profile of the currently logged-in user.
     """
-    # TODO: Fetch current user record from Supabase if not fully populated from JWT.
     return current_user
-
 
 @router.put("/me", response_model=UserResponse)
 async def update_own_profile(
-    payload: UserUpdateSelf, current_user: UserResponse = Depends(get_current_user)
+    payload: UserUpdateSelf,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session)
 ):
     """
     Updates specific fields (phone, address) for the current user's profile.
     """
-    # TODO: Update user record in Supabase database where id == current_user.id.
-    # Return updated user profile.
+    update_data = payload.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(current_user, key, value)
 
-    # Return mock updated user for schema validation
-    updated_user = current_user.model_copy(
-        update=payload.model_dump(exclude_unset=True)
-    )
-    return updated_user
-
+    session.add(current_user)
+    session.commit()
+    session.refresh(current_user)
+    return current_user
 
 @router.get("", response_model=List[UserBasicInfo])
-async def get_all_users(admin_user: UserResponse = Depends(get_current_admin)):
+async def get_all_users(
+    admin_user: User = Depends(get_current_admin),
+    session: Session = Depends(get_session)
+):
     """
     Admin-only endpoint to fetch a list of all employees.
     """
-    # TODO: Query Supabase database to fetch all users.
-    # Return list of UserBasicInfo items.
-
-    # Mocking standard empty/mock data list
-    return [
-        UserBasicInfo(
-            id=admin_user.id,
-            employee_id=admin_user.employee_id,
-            first_name=admin_user.first_name,
-            last_name=admin_user.last_name,
-            email=admin_user.email,
-            job_title=admin_user.job_title,
-            role=admin_user.role,
-        )
-    ]
-
+    statement = select(User)
+    users = session.exec(statement).all()
+    return users
 
 @router.put("/{user_id}", response_model=UserResponse)
 async def update_user_by_admin(
     user_id: str,
     payload: UserUpdateAdmin,
-    admin_user: UserResponse = Depends(get_current_admin),
+    admin_user: User = Depends(get_current_admin),
+    session: Session = Depends(get_session)
 ):
     """
     Admin-only endpoint to update any employee's details (employee_id, job_title, role).
     """
-    # TODO: Verify that target user_id exists in Supabase.
-    # TODO: Update the user in Supabase with role/job_title/employee_id.
-    # Return updated user profile.
+    user = session.get(User, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found in DB"
+        )
 
-    # Mock return updated user profile
-    return UserResponse(
-        id=user_id,
-        employee_id=payload.employee_id or "EMP-MOCK",
-        email="updated_user@example.com",
-        role=payload.role or admin_user.role,
-        first_name="Updated",
-        last_name="Employee",
-        phone="+987654321",
-        address="Updated Address",
-        profile_picture_url="https://example.com/avatar.jpg",
-        job_title=payload.job_title or "Senior Engineer",
-    )
+    update_data = payload.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(user, key, value)
+
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
