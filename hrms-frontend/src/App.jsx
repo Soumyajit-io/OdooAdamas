@@ -26,10 +26,17 @@ import {
   Home
 } from 'lucide-react';
 
+import { useUser } from "@clerk/clerk-react";
+
 function ProtectedRoute({ children }) {
-  const { currentUser } = useHRMS();
-  if (!currentUser) return <Navigate to="/login" replace />;
-  return children;
+
+const { currentUser } = useHRMS();
+
+if (!currentUser)
+   return <Navigate to="/login" replace />;
+
+return children;
+
 }
 
 function MainLayout() {
