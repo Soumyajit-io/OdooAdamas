@@ -118,7 +118,7 @@ export const HRMSProvider = ({ children }) => {
   });
 
   const { user, isLoaded } = useUser();
-  const [employee, setEmployee] = useState(null);
+  
 
   const [leaveRequests, setLeaveRequests] = useState(() => {
     const s = localStorage.getItem('hrms_leaves');
