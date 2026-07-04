@@ -4,7 +4,7 @@ import { Clock, ArrowRight, Plane } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function EmployeeDashboard() {
-  const { currentUser, employees, attendanceLogs, leaveRequests, payrollSlips, clockIn, clockOut, getEmployeeStatus } = useHRMS();
+  const { employee, attendanceLogs, leaveRequests, payrollSlips, clockIn, clockOut } = useHRMS();
   const [time, setTime] = useState(new Date());
   const [clockMsg, setClockMsg] = useState({ type: '', text: '' });
 
@@ -14,14 +14,13 @@ export default function EmployeeDashboard() {
   }, []);
 
   const todayStr = new Date().toISOString().split('T')[0];
-  const todayLog = attendanceLogs.find((log) => log.employeeId === currentUser?.employee_id && log.date === todayStr);
+  const todayLog = attendanceLogs.find(log => log.employeeId === employee?.employee_id && log.date === todayStr);
   const isClockedIn = todayLog && todayLog.checkIn && !todayLog.checkOut;
   const isClockedOut = todayLog && todayLog.checkOut;
 
-  const myAttendance = attendanceLogs.filter((log) => log.employeeId === currentUser?.employee_id).slice(0, 5);
-  const myLeaves = leaveRequests.filter((req) => req.employeeId === currentUser?.employee_id).slice(0, 4);
-  const myLatestSlip = payrollSlips.filter((slip) => slip.employeeId === currentUser?.employee_id).sort((a, b) => b.processedDate?.localeCompare(a.processedDate))[0];
-  const teamMembers = employees.filter((employee) => employee.employee_id !== currentUser?.employee_id);
+  const myAttendance = attendanceLogs.filter(log => log.employeeId === employee?.employee_id).slice(0, 5);
+  const myLeaves = leaveRequests.filter(req => req.employeeId === employee?.employee_id).slice(0, 4);
+  const myLatestSlip = payrollSlips.filter(s => s.employeeId === employee?.employee_id).sort((a, b) => b.processedDate?.localeCompare(a.processedDate))[0];
 
   const handleClockToggle = () => {
     setClockMsg({ type: '', text: '' });
@@ -37,7 +36,7 @@ export default function EmployeeDashboard() {
   };
 
   const approvedDays = leaveRequests
-    .filter((req) => req.employeeId === currentUser?.employee_id && req.status === 'Approved')
+    .filter(req => req.employeeId === employee?.employee_id && req.status === 'Approved')
     .reduce((acc, curr) => {
       const days = Math.ceil(Math.abs(new Date(curr.endDate) - new Date(curr.startDate)) / (1000 * 60 * 60 * 24)) + 1;
       return acc + days;
@@ -53,8 +52,12 @@ export default function EmployeeDashboard() {
     <div className="space-y-6 odoo-fade-in">
       <div className="o-card p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold" style={{ color: 'var(--odoo-text)' }}>Welcome back, {currentUser?.name}</h2>
-          <p className="text-sm mt-0.5" style={{ color: 'var(--odoo-text-muted)' }}>{currentUser?.job_title || currentUser?.jobTitle} · {currentUser?.department} Department</p>
+          <h2 className="text-lg font-bold" style={{ color: 'var(--odoo-text)' }}>
+            Welcome back, {employee?.name}
+          </h2>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--odoo-text-muted)' }}>
+            {employee?.jobTitle} · {employee?.department} Department
+          </p>
         </div>
         <span className="o-badge o-badge-purple">{time.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</span>
       </div>

@@ -3,12 +3,12 @@ import { useHRMS } from '../../context/HRMSContext';
 import { Printer, Cpu, FileText, CheckCircle, ArrowRight } from 'lucide-react';
 
 export default function Payroll() {
-  const { currentUser, payrollSlips, processPayroll } = useHRMS();
+  const { employee, payrollSlips, processPayroll } = useHRMS();
   const [selectedSlip, setSelectedSlip] = useState(null);
   const [adminMsg, setAdminMsg] = useState('');
 
-  const isEmployee = currentUser?.role?.toUpperCase() === 'EMPLOYEE';
-  const mySlips = payrollSlips.filter(slip => slip.employeeId === currentUser?.employee_id);
+  const isEmployee = employee?.role?.toUpperCase() === 'EMPLOYEE';
+  const mySlips = payrollSlips.filter(slip => slip.employeeId === employee?.employee_id);
   const allSlips = payrollSlips;
   const displaySlips = isEmployee ? mySlips : allSlips;
 

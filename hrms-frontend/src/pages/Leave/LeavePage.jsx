@@ -3,7 +3,7 @@ import { useHRMS } from '../../context/HRMSContext';
 import { Send, Check, X, Calendar, FileText } from 'lucide-react';
 
 export default function LeavePage() {
-  const { currentUser, leaveRequests, requestLeave, approveLeave, rejectLeave } = useHRMS();
+  const { employee, leaveRequests, requestLeave, approveLeave, rejectLeave } = useHRMS();
 
   const [type, setType] = useState('Sick Leave');
   const [startDate, setStartDate] = useState('');
@@ -11,8 +11,8 @@ export default function LeavePage() {
   const [reason, setReason] = useState('');
   const [msg, setMsg] = useState('');
 
-  const isEmployee = currentUser?.role?.toUpperCase() === 'EMPLOYEE';
-  const myRequests = leaveRequests.filter(req => req.employeeId === currentUser?.employee_id);
+  const isEmployee = employee?.role?.toUpperCase() === 'EMPLOYEE';
+  const myRequests = leaveRequests.filter(req => req.employeeId === employee?.employee_id);
 
   const handleSubmit = (e) => {
     e.preventDefault();
