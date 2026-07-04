@@ -346,8 +346,8 @@ export const HRMSProvider = ({ children }) => {
       attendanceLogs,
       payrollSlips,
       avatarColors,
-      isClockedIn,
-      isClockedOut,
+      
+      
       checkedInAt,
       login,
       logout,
