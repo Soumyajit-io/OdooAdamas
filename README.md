@@ -60,9 +60,8 @@ Our HRMS is built with a role-based architecture to ensure secure and efficient 
    npm run dev
    ```
 
-## 🤖 RAG HR Assistant (Ada)
-
-The project includes an AI-powered HR Assistant that answers questions about company policies using **Retrieval-Augmented Generation (RAG)**.
+## 🤖 RAG HR Assistant (Ada) 
+The project includes plans for an AI-powered HR Assistant that will answer questions about company policies using **Retrieval-Augmented Generation (RAG)** in the future.
 
 ### Architecture
 
