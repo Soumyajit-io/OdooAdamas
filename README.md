@@ -2,10 +2,9 @@
 
 > **Every workday, perfectly aligned.**
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge)](https://github.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue?style=for-the-badge)](https://github.com/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](https://github.com/)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge)](https://github.com/Soumyajit-io/OdooAdamas/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://github.com/Soumyajit-io/OdooAdamas/blob/master/LICENSE)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue?style=for-the-badge)](https://github.com/Soumyajit-io/OdooAdamas/blob/master/pyproject.toml)
 
 Welcome to the **Human Resource Management System (HRMS)**! This platform is designed to digitize, streamline, and simplify core HR operations. From employee onboarding and profile management to attendance tracking, leave management, and payroll visibility, our HRMS provides a comprehensive suite of tools for both administrators and employees.
 
