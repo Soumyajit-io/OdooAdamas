@@ -2,441 +2,272 @@ import { createContext, useContext, useState, useEffect } from 'react';
 
 const HRMSContext = createContext();
 
-const normalizeEmployee = (employee = {}) => {
-  const firstName = employee.first_name || employee.firstName || '';
-  const lastName = employee.last_name || employee.lastName || '';
-  const role = (employee.role || 'EMPLOYEE').toUpperCase();
-
+const normalizeEmployee = (e = {}) => {
+  const fn = e.first_name || e.firstName || '';
+  const ln = e.last_name || e.lastName || '';
+  const role = (e.role || 'EMPLOYEE').toUpperCase();
   return {
-    ...employee,
-    id: employee.id || employee.user_id || '',
-    employee_id: employee.employee_id || employee.employeeId || '',
+    ...e,
+    id: e.id || '',
+    employee_id: e.employee_id || '',
     role,
-    first_name: firstName,
-    last_name: lastName,
-    name: [firstName, lastName].filter(Boolean).join(' ') || employee.name || '',
-    phone: employee.phone || '',
-    address: employee.address || '',
-    profile_picture_url: employee.profile_picture_url || employee.profilePictureUrl || '',
-    job_title: employee.job_title || employee.jobTitle || '',
-    jobTitle: employee.job_title || employee.jobTitle || '',
-    department: employee.department || '',
-    joining_date: employee.joining_date || employee.joinDate || '',
-    joinDate: employee.joining_date || employee.joinDate || '',
-    salary: employee.salary ?? 0,
-    is_active: employee.is_active ?? true,
+    first_name: fn,
+    last_name: ln,
+    name: [fn, ln].filter(Boolean).join(' ') || e.name || '',
+    email: e.email || '',
+    phone: e.phone || '',
+    address: e.address || '',
+    profile_picture_url: e.profile_picture_url || '',
+    job_title: e.job_title || e.jobTitle || '',
+    jobTitle: e.job_title || e.jobTitle || '',
+    department: e.department || '',
+    joining_date: e.joining_date || e.joinDate || '',
+    joinDate: e.joining_date || e.joinDate || '',
+    salary: e.salary ?? 0,
+    is_active: e.is_active ?? true,
+    company: e.company || 'Adamas Consulting',
+    manager: e.manager || '',
+    location: e.location || '',
+    dob: e.dob || '',
+    nationality: e.nationality || '',
+    personal_email: e.personal_email || '',
+    gender: e.gender || '',
+    marital_status: e.marital_status || '',
+    bank_account: e.bank_account || '',
+    bank_name: e.bank_name || '',
+    ifsc: e.ifsc || '',
+    pan_no: e.pan_no || '',
+    about: e.about || '',
+    job_love: e.job_love || '',
+    interests: e.interests || '',
+    skills: e.skills || [],
+    certifications: e.certifications || [],
+    wage_type: e.wage_type || 'Fixed',
+    monthly_wage: e.monthly_wage ?? e.salary ?? 0,
+    working_days_per_week: e.working_days_per_week ?? 5,
+    break_time: e.break_time ?? 60,
+    salary_components: e.salary_components || [
+      { name: 'Basic Salary', type: 'percent', value: 50 },
+      { name: 'House Rent Allowance', type: 'percent_of_basic', value: 50 },
+      { name: 'Standard Allowance', type: 'percent', value: 10 },
+      { name: 'Performance Bonus', type: 'percent', value: 5 },
+      { name: 'Leave Travel Allowance', type: 'fixed', value: 1500 },
+      { name: 'Fixed Allowance', type: 'percent', value: 5 },
+    ],
+    pf_employer_pct: e.pf_employer_pct ?? 12,
+    pf_employee_pct: e.pf_employee_pct ?? 12,
+    professional_tax: e.professional_tax ?? 200,
   };
 };
 
+const avatarColors = ['#714B67', '#00A09D', '#E76F51', '#2A9D8F', '#264653', '#E9C46A', '#F4A261', '#6A4C93', '#1982C4'];
+
 const initialEmployees = [
-  {
-    id: 'user_001',
-    employee_id: 'EMP001',
-    email: 'john@adamas.com',
-    role: 'EMPLOYEE',
-    first_name: 'John',
-    last_name: 'Doe',
-    phone: '+1 (555) 123-4567',
-    address: '123 Tech Lane, Silicon Valley, CA',
-    profile_picture_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-    job_title: 'Software Engineer',
-    department: 'Engineering',
-    joining_date: '2024-01-15',
-    salary: 5500,
-    is_active: true,
-  },
-  {
-    id: 'user_002',
-    employee_id: 'EMP002',
-    email: 'jane@adamas.com',
-    role: 'EMPLOYEE',
-    first_name: 'Jane',
-    last_name: 'Smith',
-    phone: '+1 (555) 987-6543',
-    address: '456 People Way, San Francisco, CA',
-    profile_picture_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-    job_title: 'HR Specialist',
-    department: 'Human Resources',
-    joining_date: '2023-06-10',
-    salary: 6000,
-    is_active: true,
-  },
-  {
-    id: 'user_003',
-    employee_id: 'EMP003',
-    email: 'bob@adamas.com',
-    role: 'ADMIN',
-    first_name: 'Bob',
-    last_name: 'Johnson',
-    phone: '+1 (555) 246-8135',
-    address: '789 Executive Blvd, New York, NY',
-    profile_picture_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-    job_title: 'Operations Director',
-    department: 'Operations',
-    joining_date: '2022-03-01',
-    salary: 8500,
-    is_active: true,
-  }
+  { id: 'u1', employee_id: 'EMP001', email: 'john@adamas.com', role: 'EMPLOYEE', first_name: 'John', last_name: 'Doe', phone: '+91 98765 43210', address: '123 Tech Lane, Bangalore', profile_picture_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150', job_title: 'Software Engineer', department: 'Engineering', joining_date: '2024-01-15', salary: 50000, manager: 'Bob Johnson', location: 'Bangalore', dob: '1995-03-12', nationality: 'Indian', gender: 'Male', marital_status: 'Single', personal_email: 'john.doe@gmail.com', bank_account: '1234567890', bank_name: 'HDFC Bank', ifsc: 'HDFC0001234', pan_no: 'ABCDE1234F', about: 'Passionate developer focused on building scalable web apps.', job_love: 'Solving complex problems and mentoring juniors.', interests: 'Open source, hiking, chess', skills: ['React', 'Node.js', 'Python', 'AWS'], certifications: ['AWS Solutions Architect'] },
+  { id: 'u2', employee_id: 'EMP002', email: 'jane@adamas.com', role: 'EMPLOYEE', first_name: 'Jane', last_name: 'Smith', phone: '+91 98765 43211', address: '456 People Way, Mumbai', profile_picture_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', job_title: 'HR Specialist', department: 'Human Resources', joining_date: '2023-06-10', salary: 45000, manager: 'Bob Johnson', location: 'Mumbai', dob: '1992-07-25', nationality: 'Indian', gender: 'Female', marital_status: 'Married', personal_email: 'jane.smith@gmail.com', bank_account: '9876543210', bank_name: 'ICICI Bank', ifsc: 'ICIC0005678', pan_no: 'FGHIJ5678K', about: 'HR professional with 5+ years experience.', job_love: 'Connecting people and building culture.', interests: 'Reading, yoga, travel', skills: ['Recruitment', 'Onboarding', 'Compliance'], certifications: ['SHRM-CP'] },
+  { id: 'u3', employee_id: 'EMP003', email: 'bob@adamas.com', role: 'ADMIN', first_name: 'Bob', last_name: 'Johnson', phone: '+91 98765 43212', address: '789 Executive Blvd, Delhi', profile_picture_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', job_title: 'Operations Director', department: 'Operations', joining_date: '2022-03-01', salary: 85000, manager: '', location: 'Delhi', dob: '1988-11-05', nationality: 'Indian', gender: 'Male', marital_status: 'Married', personal_email: 'bob.j@gmail.com', bank_account: '5678901234', bank_name: 'SBI', ifsc: 'SBIN0009012', pan_no: 'LMNOP9012Q', about: 'Seasoned ops leader driving efficiency.', job_love: 'Strategic planning and team growth.', interests: 'Golf, finance, photography', skills: ['Leadership', 'Strategy', 'Operations'], certifications: ['PMP', 'Six Sigma'] },
+  { id: 'u4', employee_id: 'EMP004', email: 'priya@adamas.com', role: 'EMPLOYEE', first_name: 'Priya', last_name: 'Sharma', phone: '+91 98765 43213', address: '12 Garden Street, Pune', job_title: 'UI/UX Designer', department: 'Design', joining_date: '2024-03-20', salary: 42000, manager: 'Bob Johnson', location: 'Pune', dob: '1996-09-18', nationality: 'Indian', gender: 'Female', marital_status: 'Single', skills: ['Figma', 'Sketch', 'CSS', 'User Research'], certifications: ['Google UX Certificate'] },
+  { id: 'u5', employee_id: 'EMP005', email: 'arjun@adamas.com', role: 'EMPLOYEE', first_name: 'Arjun', last_name: 'Patel', phone: '+91 98765 43214', address: '34 Lake View, Hyderabad', job_title: 'DevOps Engineer', department: 'Engineering', joining_date: '2023-11-01', salary: 55000, manager: 'Bob Johnson', location: 'Hyderabad', dob: '1993-01-30', nationality: 'Indian', gender: 'Male', marital_status: 'Single', skills: ['Docker', 'Kubernetes', 'Terraform', 'CI/CD'], certifications: ['CKA'] },
+  { id: 'u6', employee_id: 'EMP006', email: 'neha@adamas.com', role: 'EMPLOYEE', first_name: 'Neha', last_name: 'Gupta', phone: '+91 98765 43215', address: '56 MG Road, Chennai', job_title: 'Business Analyst', department: 'Operations', joining_date: '2024-05-12', salary: 40000, manager: 'Bob Johnson', location: 'Chennai', dob: '1994-12-03', nationality: 'Indian', gender: 'Female', marital_status: 'Married', skills: ['SQL', 'Tableau', 'Excel', 'JIRA'], certifications: ['CBAP'] },
+  { id: 'u7', employee_id: 'EMP007', email: 'rahul@adamas.com', role: 'EMPLOYEE', first_name: 'Rahul', last_name: 'Kumar', phone: '+91 98765 43216', address: '78 Park Avenue, Kolkata', job_title: 'QA Lead', department: 'Engineering', joining_date: '2023-08-15', salary: 48000, manager: 'Bob Johnson', location: 'Kolkata', dob: '1991-06-22', nationality: 'Indian', gender: 'Male', marital_status: 'Married', skills: ['Selenium', 'Cypress', 'Jest', 'API Testing'], certifications: ['ISTQB'] },
+  { id: 'u8', employee_id: 'EMP008', email: 'anita@adamas.com', role: 'EMPLOYEE', first_name: 'Anita', last_name: 'Desai', phone: '+91 98765 43217', address: '90 Hill Road, Bangalore', job_title: 'Content Writer', department: 'Marketing', joining_date: '2024-07-01', salary: 35000, manager: 'Bob Johnson', location: 'Bangalore', dob: '1997-04-15', nationality: 'Indian', gender: 'Female', marital_status: 'Single', skills: ['SEO', 'Copywriting', 'WordPress'], certifications: [] },
+  { id: 'u9', employee_id: 'EMP009', email: 'vikram@adamas.com', role: 'EMPLOYEE', first_name: 'Vikram', last_name: 'Singh', phone: '+91 98765 43218', address: '23 Civil Lines, Delhi', job_title: 'Finance Manager', department: 'Finance', joining_date: '2022-09-01', salary: 65000, manager: 'Bob Johnson', location: 'Delhi', dob: '1989-08-10', nationality: 'Indian', gender: 'Male', marital_status: 'Married', skills: ['Accounting', 'Tally', 'SAP', 'GST'], certifications: ['CA', 'CFA Level 2'] },
 ].map(normalizeEmployee);
 
 const initialLeaveRequests = [
-  {
-    id: 'LR001',
-    employeeId: 'EMP001',
-    employeeName: 'John Doe',
-    type: 'Sick Leave',
-    startDate: '2026-06-10',
-    endDate: '2026-06-12',
-    reason: 'Dental checkup and recovery',
-    status: 'Approved',
-    submittedAt: '2026-06-08',
-  },
-  {
-    id: 'LR002',
-    employeeId: 'EMP002',
-    employeeName: 'Jane Smith',
-    type: 'Casual Leave',
-    startDate: '2026-07-15',
-    endDate: '2026-07-18',
-    reason: 'Family gathering',
-    status: 'Pending',
-    submittedAt: '2026-07-01',
-  },
-  {
-    id: 'LR003',
-    employeeId: 'EMP001',
-    employeeName: 'John Doe',
-    type: 'Paid Leave',
-    startDate: '2026-07-20',
-    endDate: '2026-07-24',
-    reason: 'Summer vacation',
-    status: 'Pending',
-    submittedAt: '2026-07-02',
-  }
+  { id: 'LR001', employeeId: 'EMP001', employeeName: 'John Doe', type: 'Sick Leave', startDate: '2026-07-04', endDate: '2026-07-04', reason: 'Dental checkup', status: 'Approved', submittedAt: '2026-07-02' },
+  { id: 'LR002', employeeId: 'EMP002', employeeName: 'Jane Smith', type: 'Casual Leave', startDate: '2026-07-15', endDate: '2026-07-18', reason: 'Family gathering', status: 'Pending', submittedAt: '2026-07-01' },
+  { id: 'LR003', employeeId: 'EMP004', employeeName: 'Priya Sharma', type: 'Paid Leave', startDate: '2026-07-04', endDate: '2026-07-06', reason: 'Vacation', status: 'Approved', submittedAt: '2026-07-01' },
+  { id: 'LR004', employeeId: 'EMP008', employeeName: 'Anita Desai', type: 'Sick Leave', startDate: '2026-07-03', endDate: '2026-07-04', reason: 'Flu recovery', status: 'Approved', submittedAt: '2026-07-02' },
 ];
 
+const today = new Date().toISOString().split('T')[0];
+
 const initialAttendanceLogs = [
-  {
-    id: 'ATT001',
-    employeeId: 'EMP001',
-    date: '2026-07-02',
-    checkIn: '08:55 AM',
-    checkOut: '05:30 PM',
-    hoursWorked: '8.5 hrs',
-    status: 'On-time'
-  },
-  {
-    id: 'ATT002',
-    employeeId: 'EMP002',
-    date: '2026-07-02',
-    checkIn: '09:15 AM',
-    checkOut: '05:45 PM',
-    hoursWorked: '8.5 hrs',
-    status: 'Late'
-  },
-  {
-    id: 'ATT003',
-    employeeId: 'EMP001',
-    date: '2026-07-03',
-    checkIn: '08:48 AM',
-    checkOut: '06:00 PM',
-    hoursWorked: '9.2 hrs',
-    status: 'On-time'
-  },
-  {
-    id: 'ATT004',
-    employeeId: 'EMP002',
-    date: '2026-07-03',
-    checkIn: '09:02 AM',
-    checkOut: '05:00 PM',
-    hoursWorked: '8.0 hrs',
-    status: 'On-time'
-  }
+  { id: 'A01', employeeId: 'EMP002', date: today, checkIn: '09:02 AM', checkOut: '', hoursWorked: '-', status: 'On-time' },
+  { id: 'A02', employeeId: 'EMP003', date: today, checkIn: '08:45 AM', checkOut: '', hoursWorked: '-', status: 'On-time' },
+  { id: 'A03', employeeId: 'EMP005', date: today, checkIn: '09:15 AM', checkOut: '', hoursWorked: '-', status: 'Late' },
+  { id: 'A04', employeeId: 'EMP006', date: today, checkIn: '09:00 AM', checkOut: '', hoursWorked: '-', status: 'On-time' },
+  { id: 'A05', employeeId: 'EMP007', date: today, checkIn: '08:50 AM', checkOut: '', hoursWorked: '-', status: 'On-time' },
+  { id: 'A06', employeeId: 'EMP009', date: today, checkIn: '08:30 AM', checkOut: '05:30 PM', hoursWorked: '9.0 hrs', status: 'On-time' },
+  { id: 'A07', employeeId: 'EMP001', date: '2026-07-03', checkIn: '08:55 AM', checkOut: '05:30 PM', hoursWorked: '8.5 hrs', status: 'On-time' },
+  { id: 'A08', employeeId: 'EMP002', date: '2026-07-03', checkIn: '09:10 AM', checkOut: '05:45 PM', hoursWorked: '8.5 hrs', status: 'Late' },
+  { id: 'A09', employeeId: 'EMP003', date: '2026-07-03', checkIn: '08:40 AM', checkOut: '06:00 PM', hoursWorked: '9.3 hrs', status: 'On-time' },
+  { id: 'A10', employeeId: 'EMP005', date: '2026-07-03', checkIn: '09:00 AM', checkOut: '05:30 PM', hoursWorked: '8.5 hrs', status: 'On-time' },
+  { id: 'A11', employeeId: 'EMP001', date: '2026-07-02', checkIn: '08:50 AM', checkOut: '05:20 PM', hoursWorked: '8.5 hrs', status: 'On-time' },
+  { id: 'A12', employeeId: 'EMP002', date: '2026-07-02', checkIn: '09:05 AM', checkOut: '05:30 PM', hoursWorked: '8.4 hrs', status: 'On-time' },
+  { id: 'A13', employeeId: 'EMP001', date: '2026-07-01', checkIn: '09:00 AM', checkOut: '05:00 PM', hoursWorked: '8.0 hrs', status: 'On-time' },
+];
+
+const initialPayrollSlips = [
+  { id: 'P1', employeeId: 'EMP001', employeeName: 'John Doe', month: 'Jun 2026', basic: 25000, hra: 12500, allowance: 5000, pf: 3000, tax: 200, net: 39000, status: 'Paid', processedDate: '2026-06-30' },
+  { id: 'P2', employeeId: 'EMP002', employeeName: 'Jane Smith', month: 'Jun 2026', basic: 22500, hra: 11250, allowance: 4000, pf: 2700, tax: 200, net: 34800, status: 'Paid', processedDate: '2026-06-30' },
 ];
 
 export const HRMSProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem('hrms_current_user');
-    const parsed = saved ? JSON.parse(saved) : null;
-    return parsed ? normalizeEmployee(parsed) : null;
+    const s = localStorage.getItem('hrms_current_user');
+    return s ? normalizeEmployee(JSON.parse(s)) : null;
   });
-
   const [employees, setEmployees] = useState(() => {
-    const saved = localStorage.getItem('hrms_employees');
-    const parsed = saved ? JSON.parse(saved) : initialEmployees;
-    return Array.isArray(parsed) ? parsed.map(normalizeEmployee) : initialEmployees;
+    const s = localStorage.getItem('hrms_employees');
+    const p = s ? JSON.parse(s) : initialEmployees;
+    return Array.isArray(p) ? p.map(normalizeEmployee) : initialEmployees;
   });
-
   const [leaveRequests, setLeaveRequests] = useState(() => {
-    const saved = localStorage.getItem('hrms_leaves');
-    return saved ? JSON.parse(saved) : initialLeaveRequests;
+    const s = localStorage.getItem('hrms_leaves');
+    return s ? JSON.parse(s) : initialLeaveRequests;
   });
-
   const [attendanceLogs, setAttendanceLogs] = useState(() => {
-    const saved = localStorage.getItem('hrms_attendance');
-    return saved ? JSON.parse(saved) : initialAttendanceLogs;
+    const s = localStorage.getItem('hrms_attendance');
+    return s ? JSON.parse(s) : initialAttendanceLogs;
   });
-
   const [payrollSlips, setPayrollSlips] = useState(() => {
-    const saved = localStorage.getItem('hrms_payroll');
-    if (saved) return JSON.parse(saved);
-    
-    // Auto-generate slips
-    const slips = [];
-    const months = ['May 2026', 'June 2026'];
-    initialEmployees.forEach(emp => {
-      months.forEach((m, idx) => {
-        const basic = emp.salary * 0.5;
-        const hra = emp.salary * 0.3;
-        const allowance = emp.salary * 0.2;
-        const pf = emp.salary * 0.12;
-        const tax = emp.salary * 0.1;
-        const net = basic + hra + allowance - pf - tax;
-        
-        slips.push({
-          id: `PAY-${emp.employee_id}-${idx}`,
-          employeeId: emp.employee_id,
-          employeeName: `${emp.first_name} ${emp.last_name}`,
-          month: m,
-          basic,
-          hra,
-          allowance,
-          pf,
-          tax,
-          net,
-          status: 'Paid',
-          processedDate: `2026-${idx === 0 ? '05' : '06'}-30`
-        });
-      });
-    });
-    return slips;
+    const s = localStorage.getItem('hrms_payroll');
+    return s ? JSON.parse(s) : initialPayrollSlips;
+  });
+  const [checkedInAt, setCheckedInAt] = useState(() => {
+    const s = localStorage.getItem('hrms_checkedin_at');
+    return s || null;
   });
 
-  useEffect(() => {
-    localStorage.setItem('hrms_employees', JSON.stringify(employees));
-  }, [employees]);
+  useEffect(() => { localStorage.setItem('hrms_employees', JSON.stringify(employees)); }, [employees]);
+  useEffect(() => { localStorage.setItem('hrms_leaves', JSON.stringify(leaveRequests)); }, [leaveRequests]);
+  useEffect(() => { localStorage.setItem('hrms_attendance', JSON.stringify(attendanceLogs)); }, [attendanceLogs]);
+  useEffect(() => { localStorage.setItem('hrms_payroll', JSON.stringify(payrollSlips)); }, [payrollSlips]);
+  useEffect(() => { if (checkedInAt) localStorage.setItem('hrms_checkedin_at', checkedInAt); else localStorage.removeItem('hrms_checkedin_at'); }, [checkedInAt]);
 
-  useEffect(() => {
-    localStorage.setItem('hrms_leaves', JSON.stringify(leaveRequests));
-  }, [leaveRequests]);
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayLog = currentUser ? attendanceLogs.find((log) => log.employeeId === currentUser.employee_id && log.date === todayStr) : null;
+  const isClockedIn = !!(todayLog && todayLog.checkIn && !todayLog.checkOut);
+  const isClockedOut = !!(todayLog && todayLog.checkOut);
 
-  useEffect(() => {
-    localStorage.setItem('hrms_attendance', JSON.stringify(attendanceLogs));
-  }, [attendanceLogs]);
-
-  useEffect(() => {
-    localStorage.setItem('hrms_payroll', JSON.stringify(payrollSlips));
-  }, [payrollSlips]);
-
-  // Auth Operations
-  const login = (email, password) => {
-    const emp = employees.find(e => e.email.toLowerCase() === email.toLowerCase());
+  const login = (email) => {
+    const emp = employees.find((e) => e.email.toLowerCase() === email.toLowerCase());
     if (emp) {
-      const normalizedEmp = normalizeEmployee(emp);
-      setCurrentUser(normalizedEmp);
-      localStorage.setItem('hrms_current_user', JSON.stringify(normalizedEmp));
+      const n = normalizeEmployee(emp);
+      setCurrentUser(n);
+      localStorage.setItem('hrms_current_user', JSON.stringify(n));
+      const tLog = attendanceLogs.find((log) => log.employeeId === n.employee_id && log.date === todayStr && log.checkIn && !log.checkOut);
+      if (tLog) setCheckedInAt(tLog.checkIn);
+      else setCheckedInAt(null);
       return { success: true };
     }
-    return { success: false, message: 'Invalid credentials. Use john@adamas.com (Employee) or bob@adamas.com (Admin)' };
+    return { success: false, message: 'Invalid credentials. Try john@adamas.com or bob@adamas.com' };
   };
 
-  const logout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem('hrms_current_user');
-  };
+  const logout = () => { setCurrentUser(null); setCheckedInAt(null); localStorage.removeItem('hrms_current_user'); };
 
   const signup = (firstName, lastName, email, password, role, department, jobTitle) => {
-    const exists = employees.some(e => e.email.toLowerCase() === email.toLowerCase());
-    if (exists) {
+    if (employees.some((e) => e.email.toLowerCase() === email.toLowerCase())) {
       return { success: false, message: 'Email already registered.' };
     }
-
-    const uppercaseRole = role.toUpperCase() === 'ADMIN' ? 'ADMIN' : 'EMPLOYEE';
-    const newEmpId = `user_${String(employees.length + 1).padStart(3, '0')}`;
-    const newEmployeeId = `EMP${String(employees.length + 1).padStart(3, '0')}`;
-
+    const r = role?.toUpperCase() === 'ADMIN' ? 'ADMIN' : 'EMPLOYEE';
     const newEmp = normalizeEmployee({
-      id: newEmpId,
-      employee_id: newEmployeeId,
+      id: `u${employees.length + 1}`,
+      employee_id: `EMP${String(employees.length + 1).padStart(3, '0')}`,
       email,
-      role: uppercaseRole,
+      role: r,
       first_name: firstName,
       last_name: lastName,
-      phone: '+1 (555) 000-0000',
-      address: 'Update address in profile',
-      profile_picture_url: '',
-      job_title: jobTitle || (uppercaseRole === 'ADMIN' ? 'HR Manager' : 'Software Engineer'),
-      department,
+      job_title: jobTitle || 'New Employee',
+      department: department || 'General',
       joining_date: new Date().toISOString().split('T')[0],
-      salary: uppercaseRole === 'ADMIN' ? 8000 : 5000,
-      is_active: true,
+      salary: r === 'ADMIN' ? 80000 : 40000,
     });
-
-    const updated = [...employees, newEmp];
-    setEmployees(updated.map(normalizeEmployee));
+    setEmployees((prev) => [...prev, newEmp]);
     setCurrentUser(newEmp);
     localStorage.setItem('hrms_current_user', JSON.stringify(newEmp));
-    
-    // Auto-generate a default payslip for the new user
-    const basic = newEmp.salary * 0.5;
-    const hra = newEmp.salary * 0.3;
-    const allowance = newEmp.salary * 0.2;
-    const pf = newEmp.salary * 0.12;
-    const tax = newEmp.salary * 0.1;
-    const net = basic + hra + allowance - pf - tax;
-    
-    const newSlip = {
-      id: `PAY-${newEmp.employee_id}-0`,
-      employeeId: newEmp.employee_id,
-      employeeName: `${newEmp.first_name} ${newEmp.last_name}`,
-      month: 'June 2026',
-      basic,
-      hra,
-      allowance,
-      pf,
-      tax,
-      net,
-      status: 'Paid',
-      processedDate: '2026-06-30'
-    };
-    setPayrollSlips(prev => [...prev, newSlip]);
-
     return { success: true };
   };
 
-  // Clock Operations
+  const addEmployee = (data) => {
+    if (employees.some((e) => e.email.toLowerCase() === data.email.toLowerCase())) {
+      return { success: false, message: 'Email already exists.' };
+    }
+    const newEmp = normalizeEmployee({
+      id: `u${employees.length + 1}`,
+      employee_id: `EMP${String(employees.length + 1).padStart(3, '0')}`,
+      ...data,
+      role: 'EMPLOYEE',
+      joining_date: data.joining_date || new Date().toISOString().split('T')[0],
+      salary: data.salary || 40000,
+    });
+    setEmployees((prev) => [...prev, newEmp]);
+    return { success: true, employee: newEmp };
+  };
+
   const clockIn = () => {
-    if (!currentUser) return;
-    const today = new Date().toISOString().split('T')[0];
-    
-    // Check if already clocked in today
-    const exists = attendanceLogs.some(log => log.employeeId === currentUser.employee_id && log.date === today);
-    if (exists) return { success: false, message: 'Already clocked in today.' };
-
-    const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (!currentUser) return { success: false, message: 'Not logged in' };
+    const exists = attendanceLogs.some((log) => log.employeeId === currentUser.employee_id && log.date === todayStr && log.checkIn);
+    if (exists) return { success: false, message: 'Already checked in today.' };
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const isLate = new Date().getHours() >= 9 && new Date().getMinutes() > 0;
-    
-    const newLog = {
-      id: `ATT${String(attendanceLogs.length + 1).padStart(3, '0')}`,
-      employeeId: currentUser.employee_id,
-      date: today,
-      checkIn: timeString,
-      checkOut: '',
-      hoursWorked: '-',
-      status: isLate ? 'Late' : 'On-time'
-    };
-
-    setAttendanceLogs([newLog, ...attendanceLogs]);
-    return { success: true, log: newLog };
+    const log = { id: `A${Date.now()}`, employeeId: currentUser.employee_id, date: todayStr, checkIn: time, checkOut: '', hoursWorked: '-', status: isLate ? 'Late' : 'On-time' };
+    setAttendanceLogs((prev) => [log, ...prev]);
+    setCheckedInAt(time);
+    return { success: true, log };
   };
 
   const clockOut = () => {
-    if (!currentUser) return;
-    const today = new Date().toISOString().split('T')[0];
-    
-    const logIndex = attendanceLogs.findIndex(log => log.employeeId === currentUser.employee_id && log.date === today && log.checkOut === '');
-    if (logIndex === -1) return { success: false, message: 'Active check-in not found for today.' };
-
-    const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    
-    // Calculate simple duration
-    const checkInTimeStr = attendanceLogs[logIndex].checkIn;
-    // Just a placeholder duration (say, 8.2 hrs)
-    const hoursWorked = '8.2 hrs';
-
+    if (!currentUser) return { success: false, message: 'Not logged in' };
+    const idx = attendanceLogs.findIndex((log) => log.employeeId === currentUser.employee_id && log.date === todayStr && !log.checkOut);
+    if (idx === -1) return { success: false, message: 'No active check-in found.' };
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const updated = [...attendanceLogs];
-    updated[logIndex] = {
-      ...updated[logIndex],
-      checkOut: timeString,
-      hoursWorked
-    };
-
+    updated[idx] = { ...updated[idx], checkOut: time, hoursWorked: '8.2 hrs' };
     setAttendanceLogs(updated);
+    setCheckedInAt(null);
     return { success: true };
   };
 
-  // Leave Operations
   const requestLeave = (type, startDate, endDate, reason) => {
     if (!currentUser) return;
-    
-    const newRequest = {
-      id: `LR${String(leaveRequests.length + 1).padStart(3, '0')}`,
-      employeeId: currentUser.employee_id,
-      employeeName: `${currentUser.first_name} ${currentUser.last_name}`,
-      type,
-      startDate,
-      endDate,
-      reason,
-      status: 'Pending',
-      submittedAt: new Date().toISOString().split('T')[0]
-    };
-
-    setLeaveRequests([newRequest, ...leaveRequests]);
+    const req = { id: `LR${Date.now()}`, employeeId: currentUser.employee_id, employeeName: currentUser.name, type, startDate, endDate, reason, status: 'Pending', submittedAt: todayStr };
+    setLeaveRequests((prev) => [req, ...prev]);
     return { success: true };
   };
 
-  const approveLeave = (id) => {
-    setLeaveRequests(prev => prev.map(req => req.id === id ? { ...req, status: 'Approved' } : req));
-  };
+  const approveLeave = (id) => setLeaveRequests((prev) => prev.map((req) => req.id === id ? { ...req, status: 'Approved' } : req));
+  const rejectLeave = (id) => setLeaveRequests((prev) => prev.map((req) => req.id === id ? { ...req, status: 'Rejected' } : req));
 
-  const rejectLeave = (id) => {
-    setLeaveRequests(prev => prev.map(req => req.id === id ? { ...req, status: 'Rejected' } : req));
-  };
-
-  // Payroll Operations
   const processPayroll = () => {
-    // Generate new payroll slips for June/July 2026 for all users who don't have it
-    const currentMonth = 'July 2026';
-    const existing = payrollSlips.filter(p => p.month === currentMonth);
-    if (existing.length === employees.length) {
-      return { success: false, message: 'Payroll already processed for July 2026.' };
-    }
-
-    const newSlips = [];
-    employees.forEach(emp => {
-      const alreadyProcessed = payrollSlips.some(p => p.employeeId === emp.employee_id && p.month === currentMonth);
-      if (!alreadyProcessed) {
-        const basic = emp.salary * 0.5;
-        const hra = emp.salary * 0.3;
-        const allowance = emp.salary * 0.2;
-        const pf = emp.salary * 0.12;
-        const tax = emp.salary * 0.1;
-        const net = basic + hra + allowance - pf - tax;
-        
-        newSlips.push({
-          id: `PAY-${emp.employee_id}-JUL2026`,
-          employeeId: emp.employee_id,
-          employeeName: `${emp.first_name} ${emp.last_name}`,
-          month: currentMonth,
-          basic,
-          hra,
-          allowance,
-          pf,
-          tax,
-          net,
-          status: 'Paid',
-          processedDate: new Date().toISOString().split('T')[0]
-        });
-      }
-    });
-
-    setPayrollSlips(prev => [...prev, ...newSlips]);
-    return { success: true, count: newSlips.length };
+    if (!currentUser || currentUser.role !== 'ADMIN') return { success: false, message: 'Only admins can process payroll.' };
+    const generated = employees.map((employee) => ({
+      id: `P${Date.now()}-${employee.id}`,
+      employeeId: employee.employee_id,
+      employeeName: employee.name,
+      month: 'Jul 2026',
+      basic: Math.round(employee.salary * 0.5),
+      hra: Math.round(employee.salary * 0.25),
+      allowance: Math.round(employee.salary * 0.1),
+      pf: Math.round(employee.salary * 0.12 * 0.5),
+      tax: 200,
+      net: employee.salary - Math.round(employee.salary * 0.12 * 0.5) - 200,
+      status: 'Paid',
+      processedDate: new Date().toISOString().split('T')[0],
+    }));
+    setPayrollSlips(generated);
+    return { success: true, count: generated.length };
   };
 
-  // Profile Update
   const updateProfile = (fields) => {
     if (!currentUser) return;
-    
-    const updatedEmp = normalizeEmployee({
-      ...currentUser,
-      ...fields
-    });
-
-    setEmployees(prev => prev.map(emp => emp.id === currentUser.id ? updatedEmp : emp));
-    setCurrentUser(updatedEmp);
-    localStorage.setItem('hrms_current_user', JSON.stringify(updatedEmp));
+    const updated = normalizeEmployee({ ...currentUser, ...fields });
+    setEmployees((prev) => prev.map((employee) => employee.id === currentUser.id ? updated : employee));
+    setCurrentUser(updated);
+    localStorage.setItem('hrms_current_user', JSON.stringify(updated));
     return { success: true };
+  };
+
+  const getEmployeeStatus = (empId) => {
+    const currentLog = attendanceLogs.find((log) => log.employeeId === empId && log.date === todayStr && log.checkIn && !log.checkOut);
+    if (currentLog) return 'present';
+    const checkedOutLog = attendanceLogs.find((log) => log.employeeId === empId && log.date === todayStr && log.checkOut);
+    if (checkedOutLog) return 'present';
+    const onLeave = leaveRequests.find((leave) => leave.employeeId === empId && leave.status === 'Approved' && leave.startDate <= todayStr && leave.endDate >= todayStr);
+    if (onLeave) return 'leave';
+    return 'absent';
   };
 
   return (
@@ -446,16 +277,22 @@ export const HRMSProvider = ({ children }) => {
       leaveRequests,
       attendanceLogs,
       payrollSlips,
+      avatarColors,
+      isClockedIn,
+      isClockedOut,
+      checkedInAt,
       login,
       logout,
       signup,
+      addEmployee,
       clockIn,
       clockOut,
       requestLeave,
       approveLeave,
       rejectLeave,
       processPayroll,
-      updateProfile
+      updateProfile,
+      getEmployeeStatus,
     }}>
       {children}
     </HRMSContext.Provider>
@@ -463,9 +300,7 @@ export const HRMSProvider = ({ children }) => {
 };
 
 export const useHRMS = () => {
-  const context = useContext(HRMSContext);
-  if (!context) {
-    throw new Error('useHRMS must be used within an HRMSProvider');
-  }
-  return context;
+  const ctx = useContext(HRMSContext);
+  if (!ctx) throw new Error('useHRMS must be used within HRMSProvider');
+  return ctx;
 };
