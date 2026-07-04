@@ -1,4 +1,4 @@
-name: Lint and Format
+name: Lint, Format and Test
 
 on:
   push:
@@ -23,3 +23,22 @@ jobs:
         uses: astral-sh/ruff-action@v3
         with:
           args: "format --check"
+
+  test:
+    name: Run Tests
+    needs: lint-format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install Dependencies
+        run: uv sync --frozen
+
+      - name: Run Tests
+        run: uv run pytest
