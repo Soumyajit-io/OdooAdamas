@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { useUser } from "@clerk/clerk-react";
 
 const HRMSContext = createContext();
 
@@ -155,7 +156,7 @@ const initialAttendanceLogs = [
 ];
 
 export const HRMSProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(() => {
+  const [employee, setemployee] = useState(() => {
     const saved = localStorage.getItem('hrms_current_user');
     const parsed = saved ? JSON.parse(saved) : null;
     return parsed ? normalizeEmployee(parsed) : null;
@@ -166,6 +167,9 @@ export const HRMSProvider = ({ children }) => {
     const parsed = saved ? JSON.parse(saved) : initialEmployees;
     return Array.isArray(parsed) ? parsed.map(normalizeEmployee) : initialEmployees;
   });
+
+  const { user, isLoaded } = useUser();
+  const [employee, setEmployee] = useState(null);
 
   const [leaveRequests, setLeaveRequests] = useState(() => {
     const saved = localStorage.getItem('hrms_leaves');
@@ -213,6 +217,21 @@ export const HRMSProvider = ({ children }) => {
   });
 
   useEffect(() => {
+  const fetchEmployee = async () => {
+    if (!isLoaded || !user) return;
+
+    const email = user.primaryEmailAddress?.emailAddress;
+
+    const res = await fetch(`/api/employees/by-email/${email}`);
+    const data = await res.json();
+
+    setEmployee(data);
+  };
+
+  fetchEmployee();
+}, [user, isLoaded]);
+
+  useEffect(() => {
     localStorage.setItem('hrms_employees', JSON.stringify(employees));
   }, [employees]);
 
@@ -233,7 +252,7 @@ export const HRMSProvider = ({ children }) => {
     const emp = employees.find(e => e.email.toLowerCase() === email.toLowerCase());
     if (emp) {
       const normalizedEmp = normalizeEmployee(emp);
-      setCurrentUser(normalizedEmp);
+      setemployee(normalizedEmp);
       localStorage.setItem('hrms_current_user', JSON.stringify(normalizedEmp));
       return { success: true };
     }
@@ -241,7 +260,7 @@ export const HRMSProvider = ({ children }) => {
   };
 
   const logout = () => {
-    setCurrentUser(null);
+    setemployee(null);
     localStorage.removeItem('hrms_current_user');
   };
 
@@ -274,7 +293,7 @@ export const HRMSProvider = ({ children }) => {
 
     const updated = [...employees, newEmp];
     setEmployees(updated.map(normalizeEmployee));
-    setCurrentUser(newEmp);
+    setemployee(newEmp);
     localStorage.setItem('hrms_current_user', JSON.stringify(newEmp));
     
     // Auto-generate a default payslip for the new user
@@ -306,11 +325,11 @@ export const HRMSProvider = ({ children }) => {
 
   // Clock Operations
   const clockIn = () => {
-    if (!currentUser) return;
+    if (!employee) return;
     const today = new Date().toISOString().split('T')[0];
     
     // Check if already clocked in today
-    const exists = attendanceLogs.some(log => log.employeeId === currentUser.employee_id && log.date === today);
+    const exists = attendanceLogs.some(log => log.employeeId === employee.employee_id && log.date === today);
     if (exists) return { success: false, message: 'Already clocked in today.' };
 
     const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -318,7 +337,7 @@ export const HRMSProvider = ({ children }) => {
     
     const newLog = {
       id: `ATT${String(attendanceLogs.length + 1).padStart(3, '0')}`,
-      employeeId: currentUser.employee_id,
+      employeeId: employee.employee_id,
       date: today,
       checkIn: timeString,
       checkOut: '',
@@ -331,10 +350,10 @@ export const HRMSProvider = ({ children }) => {
   };
 
   const clockOut = () => {
-    if (!currentUser) return;
+    if (!employee) return;
     const today = new Date().toISOString().split('T')[0];
     
-    const logIndex = attendanceLogs.findIndex(log => log.employeeId === currentUser.employee_id && log.date === today && log.checkOut === '');
+    const logIndex = attendanceLogs.findIndex(log => log.employeeId === employee.employee_id && log.date === today && log.checkOut === '');
     if (logIndex === -1) return { success: false, message: 'Active check-in not found for today.' };
 
     const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -357,12 +376,12 @@ export const HRMSProvider = ({ children }) => {
 
   // Leave Operations
   const requestLeave = (type, startDate, endDate, reason) => {
-    if (!currentUser) return;
+    if (!employee) return;
     
     const newRequest = {
       id: `LR${String(leaveRequests.length + 1).padStart(3, '0')}`,
-      employeeId: currentUser.employee_id,
-      employeeName: `${currentUser.first_name} ${currentUser.last_name}`,
+      employeeId: employee.employee_id,
+      employeeName: `${employee.first_name} ${employee.last_name}`,
       type,
       startDate,
       endDate,
@@ -426,22 +445,22 @@ export const HRMSProvider = ({ children }) => {
 
   // Profile Update
   const updateProfile = (fields) => {
-    if (!currentUser) return;
+    if (!employee) return;
     
     const updatedEmp = normalizeEmployee({
-      ...currentUser,
+      ...employee,
       ...fields
     });
 
-    setEmployees(prev => prev.map(emp => emp.id === currentUser.id ? updatedEmp : emp));
-    setCurrentUser(updatedEmp);
+    setEmployees(prev => prev.map(emp => emp.id === employee.id ? updatedEmp : emp));
+    setemployee(updatedEmp);
     localStorage.setItem('hrms_current_user', JSON.stringify(updatedEmp));
     return { success: true };
   };
 
   return (
     <HRMSContext.Provider value={{
-      currentUser,
+      employee,
       employees,
       leaveRequests,
       attendanceLogs,

@@ -3,16 +3,16 @@ import { useHRMS } from '../../context/HRMSContext';
 import { User, Phone, MapPin, Mail, Shield, Briefcase, Calendar, DollarSign, Edit, Save, Check } from 'lucide-react';
 
 export default function Profile() {
-  const { currentUser, updateProfile } = useHRMS();
+  const { employee, updateProfile } = useHRMS();
   const [isEditing, setIsEditing] = useState(false);
-  const [firstName, setFirstName] = useState(currentUser?.first_name || '');
-  const [lastName, setLastName] = useState(currentUser?.last_name || '');
-  const [phone, setPhone] = useState(currentUser?.phone || '');
-  const [address, setAddress] = useState(currentUser?.address || '');
+  const [firstName, setFirstName] = useState(employee?.first_name || '');
+  const [lastName, setLastName] = useState(employee?.last_name || '');
+  const [phone, setPhone] = useState(employee?.phone || '');
+  const [address, setAddress] = useState(employee?.address || '');
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const displayName = [currentUser?.first_name, currentUser?.last_name].filter(Boolean).join(' ') || currentUser?.name || 'User';
+  const displayName = [employee?.first_name, employee?.last_name].filter(Boolean).join(' ') || employee?.name || 'User';
 
   const handleSave = (e) => {
     e.preventDefault();
@@ -43,7 +43,7 @@ export default function Profile() {
           <div className="text-center sm:text-left flex-1 sm:mb-1">
             <h2 className="text-lg font-bold" style={{ color: 'var(--odoo-text)' }}>{displayName}</h2>
             <p className="text-sm" style={{ color: 'var(--odoo-text-muted)' }}>
-              {currentUser?.job_title || currentUser?.jobTitle} · {currentUser?.department}
+              {employee?.job_title || employee?.jobTitle} · {employee?.department}
             </p>
           </div>
           <div className="sm:mb-1">
@@ -80,7 +80,7 @@ export default function Profile() {
                 {isEditing ? (
                   <input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className="o-input" />
                 ) : (
-                  <p className="text-sm font-medium" style={{ color: 'var(--odoo-text)' }}>{currentUser?.first_name}</p>
+                  <p className="text-sm font-medium" style={{ color: 'var(--odoo-text)' }}>{employee?.first_name}</p>
                 )}
               </div>
               <div>
@@ -88,7 +88,7 @@ export default function Profile() {
                 {isEditing ? (
                   <input type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} className="o-input" />
                 ) : (
-                  <p className="text-sm font-medium" style={{ color: 'var(--odoo-text)' }}>{currentUser?.last_name}</p>
+                  <p className="text-sm font-medium" style={{ color: 'var(--odoo-text)' }}>{employee?.last_name}</p>
                 )}
               </div>
             </div>
@@ -97,7 +97,7 @@ export default function Profile() {
               <label className="block text-xs font-medium mb-1" style={{ color: 'var(--odoo-text-muted)' }}>Email</label>
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4" style={{ color: 'var(--odoo-text-light)' }} />
-                <p className="text-sm" style={{ color: 'var(--odoo-text)' }}>{currentUser?.email}</p>
+                <p className="text-sm" style={{ color: 'var(--odoo-text)' }}>{employee?.email}</p>
               </div>
             </div>
 
@@ -108,7 +108,7 @@ export default function Profile() {
               ) : (
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4" style={{ color: 'var(--odoo-text-light)' }} />
-                  <p className="text-sm" style={{ color: 'var(--odoo-text)' }}>{currentUser?.phone}</p>
+                  <p className="text-sm" style={{ color: 'var(--odoo-text)' }}>{employee?.phone}</p>
                 </div>
               )}
             </div>
@@ -120,7 +120,7 @@ export default function Profile() {
               ) : (
                 <div className="flex items-start gap-2">
                   <MapPin className="h-4 w-4 shrink-0 mt-0.5" style={{ color: 'var(--odoo-text-light)' }} />
-                  <p className="text-sm" style={{ color: 'var(--odoo-text)' }}>{currentUser?.address}</p>
+                  <p className="text-sm" style={{ color: 'var(--odoo-text)' }}>{employee?.address}</p>
                 </div>
               )}
             </div>
@@ -136,7 +136,7 @@ export default function Profile() {
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: 'var(--odoo-text-muted)' }}>Employee ID</label>
-              <p className="text-sm font-mono font-bold" style={{ color: 'var(--odoo-text)' }}>{currentUser?.employee_id}</p>
+              <p className="text-sm font-mono font-bold" style={{ color: 'var(--odoo-text)' }}>{employee?.employee_id}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -148,18 +148,18 @@ export default function Profile() {
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1" style={{ color: 'var(--odoo-text-muted)' }}>Role</label>
-                <span className="o-badge o-badge-purple">{currentUser?.role}</span>
+                <span className="o-badge o-badge-purple">{employee?.role}</span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium mb-1" style={{ color: 'var(--odoo-text-muted)' }}>Department</label>
-                <p className="text-sm font-medium" style={{ color: 'var(--odoo-text)' }}>{currentUser?.department}</p>
+                <p className="text-sm font-medium" style={{ color: 'var(--odoo-text)' }}>{employee?.department}</p>
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1" style={{ color: 'var(--odoo-text-muted)' }}>Job Title</label>
-                <p className="text-sm font-medium" style={{ color: 'var(--odoo-text)' }}>{currentUser?.job_title || currentUser?.jobTitle}</p>
+                <p className="text-sm font-medium" style={{ color: 'var(--odoo-text)' }}>{employee?.job_title || employee?.jobTitle}</p>
               </div>
             </div>
 
@@ -168,14 +168,14 @@ export default function Profile() {
                 <label className="block text-xs font-medium mb-1" style={{ color: 'var(--odoo-text-muted)' }}>Join Date</label>
                 <div className="flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5" style={{ color: 'var(--odoo-text-light)' }} />
-                  <p className="text-sm" style={{ color: 'var(--odoo-text)' }}>{currentUser?.joining_date || currentUser?.joinDate}</p>
+                  <p className="text-sm" style={{ color: 'var(--odoo-text)' }}>{employee?.joining_date || employee?.joinDate}</p>
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1" style={{ color: 'var(--odoo-text-muted)' }}>Salary</label>
                 <div className="flex items-center gap-1">
                   <DollarSign className="h-3.5 w-3.5" style={{ color: 'var(--odoo-text-light)' }} />
-                  <p className="text-sm font-medium" style={{ color: 'var(--odoo-text)' }}>{(currentUser?.salary || 0).toLocaleString()}/mo</p>
+                  <p className="text-sm font-medium" style={{ color: 'var(--odoo-text)' }}>{(employee?.salary || 0).toLocaleString()}/mo</p>
                 </div>
               </div>
             </div>

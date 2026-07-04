@@ -2,8 +2,8 @@ import { useHRMS } from '../../context/HRMSContext';
 import { CalendarDays, CheckCircle, AlertTriangle, Clock3, Clock } from 'lucide-react';
 
 export default function Attendance() {
-  const { currentUser, attendanceLogs } = useHRMS();
-  const myLogs = attendanceLogs.filter(log => log.employeeId === currentUser?.employee_id);
+  const { employee, attendanceLogs } = useHRMS();
+  const myLogs = attendanceLogs.filter(log => log.employeeId === employee?.employee_id);
 
   const totalDays = myLogs.length;
   const onTimeDays = myLogs.filter(log => log.status === 'On-time').length;

@@ -30,9 +30,9 @@ import { useUser } from "@clerk/clerk-react";
 
 function ProtectedRoute({ children }) {
 
-const { currentUser } = useHRMS();
+const { employee } = useHRMS();
 
-if (!currentUser)
+if (!employee)
    return <Navigate to="/login" replace />;
 
 return children;
@@ -40,13 +40,13 @@ return children;
 }
 
 function MainLayout() {
-  const { currentUser, logout } = useHRMS();
+  const { employee, logout } = useHRMS();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
-  const isEmployee = currentUser?.role?.toUpperCase() === 'EMPLOYEE';
-  const isAdmin = currentUser?.role?.toUpperCase() === 'ADMIN';
+  const isEmployee = employee?.role?.toUpperCase() === 'EMPLOYEE';
+  const isAdmin = employee?.role?.toUpperCase() === 'ADMIN';
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -118,9 +118,9 @@ function MainLayout() {
               onClick={() => setUserMenuOpen(!userMenuOpen)}
             >
               <div className="h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs text-white" style={{ background: 'var(--odoo-purple)' }}>
-                {currentUser?.name.charAt(0)}
+                {employee?.name.charAt(0)}
               </div>
-              <span className="text-[13px] font-medium hidden sm:block">{currentUser?.name}</span>
+              <span className="text-[13px] font-medium hidden sm:block">{employee?.name}</span>
               <ChevronDown className="h-3.5 w-3.5 text-white/50" />
             </button>
 
@@ -129,8 +129,8 @@ function MainLayout() {
                 <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
                 <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-xl border z-50 py-1 odoo-scale-in" style={{ borderColor: 'var(--odoo-border)' }}>
                   <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--odoo-border-light)' }}>
-                    <p className="text-sm font-medium" style={{ color: 'var(--odoo-text)' }}>{currentUser?.name}</p>
-                    <p className="text-xs" style={{ color: 'var(--odoo-text-muted)' }}>{currentUser?.email}</p>
+                    <p className="text-sm font-medium" style={{ color: 'var(--odoo-text)' }}>{employee?.name}</p>
+                    <p className="text-xs" style={{ color: 'var(--odoo-text-muted)' }}>{employee?.email}</p>
                   </div>
                   <Link
                     to="/profile"
@@ -215,15 +215,15 @@ function MainLayout() {
 }
 
 function MainApp() {
-  const { currentUser } = useHRMS();
+  const { employee } = useHRMS();
   return (
     <Router>
       <Routes>
         <Route path="/login" element={
-          currentUser ? <Navigate to="/dashboard" replace /> : <Login />
+          employee ? <Navigate to="/dashboard" replace /> : <Login />
         } />
         <Route path="/signup" element={
-          currentUser ? <Navigate to="/dashboard" replace /> : <Signup />
+          employee ? <Navigate to="/dashboard" replace /> : <Signup />
         } />
         <Route path="/*" element={
           <ProtectedRoute>
