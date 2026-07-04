@@ -1,163 +1,181 @@
 import datetime
-import uuid
 from decimal import Decimal
-from typing import List, Optional
+from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
-from app.api.deps import get_current_admin, get_current_user, get_session
-from app.models import Attendance, AttendanceStatus, User
-from app.schemas.attendance import AttendanceResponse, AttendanceResponseAdmin
-from app.schemas.user import UserBasicInfo, UserRole
+from app.core.db import get_session
+from app.core.dependencies import get_current_hr_or_admin, get_current_user
+from app.models import Attendance, AttendanceStatus, SalaryConfig, User
+from app.schemas.attendance import AttendanceRecordResponse, MyAttendanceSummaryResponse
 
 router = APIRouter()
 
 
-@router.post(
-    "/check-in", response_model=AttendanceResponse, status_code=status.HTTP_201_CREATED
-)
-async def check_in(
+@router.get("/me", response_model=MyAttendanceSummaryResponse)
+def get_my_attendance(
+    month: int,
+    year: int,
     current_user: User = Depends(get_current_user),
-    session: Session = Depends(get_session),
+    db: Session = Depends(get_session),
 ):
-    """
-    Records a check-in timestamp for the current user today.
-    """
-    today = datetime.date.today()
+    start_date = datetime.date(year, month, 1)
+    if month == 12:
+        end_date = datetime.date(year + 1, 1, 1) - datetime.timedelta(days=1)
+    else:
+        end_date = datetime.date(year, month + 1, 1) - datetime.timedelta(days=1)
 
-    # Check if user already checked in today
-    statement = select(Attendance).where(
-        Attendance.user_id == current_user.id, Attendance.date == today
+    records = db.exec(
+        select(Attendance).where(
+            Attendance.user_id == current_user.id,
+            Attendance.date >= start_date,
+            Attendance.date <= end_date,
+        )
+    ).all()
+
+    days_present = sum(
+        1
+        for r in records
+        if r.status in [AttendanceStatus.PRESENT, AttendanceStatus.HALF_DAY]
     )
-    existing_record = session.exec(statement).first()
-    if existing_record:
+    leaves_count = sum(1 for r in records if r.status == AttendanceStatus.ON_LEAVE)
+
+    # Calculate total working days in month excluding weekends (simplistic calculation)
+    total_working_days = sum(
+        1
+        for d in range((end_date - start_date).days + 1)
+        if (start_date + datetime.timedelta(days=d)).weekday() < 5
+    )
+
+    return {
+        "days_present": days_present,
+        "leaves_count": leaves_count,
+        "total_working_days": total_working_days,
+        "records": records,
+    }
+
+
+@router.get("/", response_model=List[AttendanceRecordResponse])
+def get_company_attendance(
+    date_str: str,
+    search: str = None,
+    current_user: User = Depends(get_current_hr_or_admin),
+    db: Session = Depends(get_session),
+):
+    try:
+        date_obj = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Already checked in today"
+            status_code=400, detail="Invalid date format, use YYYY-MM-DD"
         )
 
-    # Create new attendance record
-    new_record = Attendance(
-        id=uuid.uuid4(),
-        user_id=current_user.id,
-        date=today,
-        check_in=datetime.datetime.utcnow(),
-        status=AttendanceStatus.PRESENT,
+    query = (
+        select(Attendance)
+        .join(User)
+        .where(Attendance.date == date_obj, User.company_id == current_user.company_id)
     )
-    session.add(new_record)
-    session.commit()
-    session.refresh(new_record)
-    return new_record
 
-
-@router.post("/check-out", response_model=AttendanceResponse)
-async def check_out(
-    current_user: User = Depends(get_current_user),
-    session: Session = Depends(get_session),
-):
-    """
-    Records a check-out timestamp for the current user today.
-    """
-    today = datetime.date.today()
-
-    # Fetch today's check-in record
-    statement = select(Attendance).where(
-        Attendance.user_id == current_user.id, Attendance.date == today
-    )
-    record = session.exec(statement).first()
-
-    if not record:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Not checked in"
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.where(
+            User.first_name.like(search_pattern) | User.last_name.like(search_pattern)
         )
 
-    if record.check_out is not None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Already checked out"
-        )
-
-    # Record check-out time and calculate working hours
-    record.check_out = datetime.datetime.utcnow()
-    if record.check_in:
-        duration = record.check_out - record.check_in
-        hours = Decimal(duration.total_seconds() / 3600.0)
-        record.working_hours = round(hours, 2)
-
-    session.add(record)
-    session.commit()
-    session.refresh(record)
-    return record
-
-
-@router.get("/me", response_model=List[AttendanceResponse])
-async def get_own_attendance(
-    start_date: Optional[datetime.date] = Query(None),
-    end_date: Optional[datetime.date] = Query(None),
-    current_user: User = Depends(get_current_user),
-    session: Session = Depends(get_session),
-):
-    """
-    Fetches attendance logs for the logged-in user, optionally filtered by date range.
-    """
-    statement = select(Attendance).where(Attendance.user_id == current_user.id)
-
-    if start_date:
-        statement = statement.where(Attendance.date >= start_date)
-    if end_date:
-        statement = statement.where(Attendance.date <= end_date)
-
-    statement = statement.order_by(Attendance.date.desc())
-    records = session.exec(statement).all()
+    records = db.exec(query).all()
     return records
 
 
-@router.get("", response_model=List[AttendanceResponseAdmin])
-async def get_all_attendance(
-    start_date: Optional[datetime.date] = Query(None),
-    end_date: Optional[datetime.date] = Query(None),
-    user_id: Optional[str] = Query(None),
-    admin_user: User = Depends(get_current_admin),
-    session: Session = Depends(get_session),
+@router.post("/check-in")
+def check_in(
+    current_user: User = Depends(get_current_user), db: Session = Depends(get_session)
 ):
-    """
-    Admin-only endpoint to fetch attendance records of all employees, with filters.
-    """
-    statement = select(Attendance, User).join(User, Attendance.user_id == User.id)
+    today = datetime.date.today()
 
-    if user_id:
-        statement = statement.where(Attendance.user_id == user_id)
-    if start_date:
-        statement = statement.where(Attendance.date >= start_date)
-    if end_date:
-        statement = statement.where(Attendance.date <= end_date)
-
-    statement = statement.order_by(Attendance.date.desc())
-    results = session.exec(statement).all()
-
-    response_list = []
-    for attendance, user in results:
-        # Construct response with embedded basic user info
-        user_info = UserBasicInfo(
-            id=user.id,
-            employee_id=user.employee_id,
-            first_name=user.first_name,
-            last_name=user.last_name,
-            email=user.email,
-            job_title=user.job_title,
-            role=UserRole(user.role.value),
-            department=user.department,
-            joining_date=user.joining_date,
-            is_active=user.is_active,
+    existing = db.exec(
+        select(Attendance).where(
+            Attendance.user_id == current_user.id, Attendance.date == today
         )
-        response_list.append(
-            AttendanceResponseAdmin(
-                id=attendance.id,
-                user_id=attendance.user_id,
-                date=attendance.date,
-                check_in=attendance.check_in,
-                check_out=attendance.check_out,
-                status=attendance.status,
-                user=user_info,
-            )
+    ).first()
+
+    if existing and existing.check_in_time:
+        raise HTTPException(status_code=400, detail="Already checked in today")
+
+    now = datetime.datetime.now()
+
+    if not existing:
+        attendance = Attendance(
+            user_id=current_user.id,
+            date=today,
+            check_in_time=now,
+            status=AttendanceStatus.PRESENT,
         )
-    return response_list
+        db.add(attendance)
+    else:
+        existing.check_in_time = now
+        existing.status = AttendanceStatus.PRESENT
+        db.add(existing)
+
+    current_user.current_status = AttendanceStatus.PRESENT
+    db.add(current_user)
+
+    db.commit()
+    return {"message": "Checked in successfully", "time": now}
+
+
+@router.post("/check-out")
+def check_out(
+    current_user: User = Depends(get_current_user), db: Session = Depends(get_session)
+):
+    today = datetime.date.today()
+
+    attendance = db.exec(
+        select(Attendance).where(
+            Attendance.user_id == current_user.id, Attendance.date == today
+        )
+    ).first()
+
+    if not attendance or not attendance.check_in_time:
+        raise HTTPException(status_code=400, detail="No check-in found for today")
+
+    now = datetime.datetime.now()
+    attendance.check_out_time = now
+
+    # Calculate duration
+    duration = now - attendance.check_in_time
+    total_hours = Decimal(str(duration.total_seconds() / 3600.0))
+
+    # Fetch Salary Config for breaks
+    config = db.exec(
+        select(SalaryConfig).where(SalaryConfig.user_id == current_user.id)
+    ).first()
+
+    break_hours = Decimal("0")
+    std_daily_hours = Decimal("8")
+
+    if config:
+        break_hours = Decimal(str(config.break_time_mins / 60.0))
+        # Assuming typical 8-hour workday if 5 days/week
+
+    work_hours = total_hours - break_hours
+    if work_hours < Decimal("0"):
+        work_hours = Decimal("0")
+
+    extra_hours = work_hours - std_daily_hours
+    if extra_hours < Decimal("0"):
+        extra_hours = Decimal("0")
+
+    attendance.work_hours = work_hours
+    attendance.extra_hours = extra_hours
+
+    current_user.current_status = AttendanceStatus.NOT_CHECKED_IN
+
+    db.add(attendance)
+    db.add(current_user)
+    db.commit()
+
+    return {
+        "message": "Checked out successfully",
+        "work_hours": work_hours,
+        "extra_hours": extra_hours,
+    }

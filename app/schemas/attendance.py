@@ -1,28 +1,26 @@
+import uuid
 from datetime import date, datetime
-from enum import Enum
-from typing import Optional
-from uuid import UUID
+from decimal import Decimal
+from typing import List, Optional
 
 from pydantic import BaseModel
 
-from app.schemas.user import UserBasicInfo
+from app.models import AttendanceStatus
 
 
-class AttendanceStatus(str, Enum):
-    PRESENT = "PRESENT"
-    ABSENT = "ABSENT"
-    HALF_DAY = "HALF_DAY"
-    LEAVE = "LEAVE"
-
-
-class AttendanceResponse(BaseModel):
-    id: UUID
-    user_id: str
+class AttendanceRecordResponse(BaseModel):
+    id: uuid.UUID
+    user_id: uuid.UUID
     date: date
-    check_in: Optional[datetime] = None
-    check_out: Optional[datetime] = None
+    check_in_time: Optional[datetime]
+    check_out_time: Optional[datetime]
+    work_hours: Optional[Decimal]
+    extra_hours: Optional[Decimal]
     status: AttendanceStatus
 
 
-class AttendanceResponseAdmin(AttendanceResponse):
-    user: Optional[UserBasicInfo] = None
+class MyAttendanceSummaryResponse(BaseModel):
+    days_present: int
+    leaves_count: int
+    total_working_days: int
+    records: List[AttendanceRecordResponse]
