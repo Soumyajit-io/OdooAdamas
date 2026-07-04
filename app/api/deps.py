@@ -1,10 +1,9 @@
-from fastapi import Header, HTTPException, status, Depends
-from typing import Dict, Any
-import jwt  # pyjwt
+from fastapi import Depends, Header, HTTPException, status
+
 from app.schemas.user import UserResponse, UserRole
 
 # TODO: Define Clerk configurations (e.g. CLERK_PEM_PUBLIC_KEYS, CLERK_JWT_AUDIENCE)
-# and database connection/session fetchers.
+
 
 async def get_token_header(authorization: str = Header(None)) -> str:
     """
@@ -13,17 +12,18 @@ async def get_token_header(authorization: str = Header(None)) -> str:
     if not authorization:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authorization header missing"
+            detail="Authorization header missing",
         )
-    
+
     parts = authorization.split()
     if len(parts) != 2 or parts[0].lower() != "bearer":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authorization header must be Bearer token"
+            detail="Authorization header must be Bearer token",
         )
-        
+
     return parts[1]
+
 
 async def get_current_user(token: str = Depends(get_token_header)) -> UserResponse:
     """
@@ -35,7 +35,7 @@ async def get_current_user(token: str = Depends(get_token_header)) -> UserRespon
     # 3. Verify signature, expiration (exp), audience (aud), and issuer (iss).
     # 4. Extract subject (sub), which is the Clerk user ID (e.g. 'user_...').
     # 5. Fetch the user profile from Supabase database.
-    
+
     # Returning a mock UserResponse for development structure validation
     mock_user = UserResponse(
         id="user_mock_12345",
@@ -47,11 +47,14 @@ async def get_current_user(token: str = Depends(get_token_header)) -> UserRespon
         phone="+123456789",
         address="123 Mock St",
         profile_picture_url="https://example.com/avatar.jpg",
-        job_title="Software Engineer"
+        job_title="Software Engineer",
     )
     return mock_user
 
-async def get_current_admin(current_user: UserResponse = Depends(get_current_user)) -> UserResponse:
+
+async def get_current_admin(
+    current_user: UserResponse = Depends(get_current_user),
+) -> UserResponse:
     """
     Enforces that the current user has the ADMIN role.
     """
@@ -60,7 +63,6 @@ async def get_current_admin(current_user: UserResponse = Depends(get_current_use
         # For structures, if mock user is not ADMIN, we might want to temporarily allow
         # or raise HTTP 403. Let's raise 403 to match specifications.
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"
         )
     return current_user
