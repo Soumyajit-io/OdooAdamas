@@ -27,11 +27,7 @@ Thumbs.db
 
 # cache
 .cache/
-
-# Python
-__pycache__/
-*.pyc
-.venv/
-
-# RAG data (ChromaDB vectors)
-Rag/data/chroma_db/
+Rag/__pycache__/
+        Rag/agent/__pycache__/
+        Rag/prompts/__pycache__/
+        Rag/tool/__pycache__/
