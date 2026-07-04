@@ -27,8 +27,7 @@ async def get_token_header(authorization: str = Header(None)) -> str:
 
 
 async def get_current_user(
-    token: str = Depends(get_token_header),
-    session: Session = Depends(get_session)
+    token: str = Depends(get_token_header), session: Session = Depends(get_session)
 ) -> User:
     """
     Validates Clerk JWT token and returns the current user profile from the database.
@@ -46,23 +45,33 @@ async def get_current_user(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid authentication token: {str(e)}"
+            detail=f"Invalid authentication token: {str(e)}",
         )
 
     if not clerk_user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token does not contain a valid user ID claim"
+            detail="Token does not contain a valid user ID claim",
         )
 
     # Dev/Test Helpers: Auto-create mock admin/employee if they don't exist
     if clerk_user_id in ("mock_admin", "mock_employee"):
         user = session.get(User, clerk_user_id)
         if not user:
-            role = UserRole.ADMIN if clerk_user_id == "mock_admin" else UserRole.EMPLOYEE
+            role = (
+                UserRole.ADMIN if clerk_user_id == "mock_admin" else UserRole.EMPLOYEE
+            )
             emp_id = "EMP-999" if clerk_user_id == "mock_admin" else "EMP-001"
-            email = "admin@example.com" if clerk_user_id == "mock_admin" else "employee@example.com"
-            title = "HR Administrator" if clerk_user_id == "mock_admin" else "Software Engineer"
+            email = (
+                "admin@example.com"
+                if clerk_user_id == "mock_admin"
+                else "employee@example.com"
+            )
+            title = (
+                "HR Administrator"
+                if clerk_user_id == "mock_admin"
+                else "Software Engineer"
+            )
 
             user = User(
                 id=clerk_user_id,
@@ -74,7 +83,7 @@ async def get_current_user(
                 phone="+123456789",
                 address="123 Dev Street",
                 job_title=title,
-                profile_picture_url="https://example.com/avatar.jpg"
+                profile_picture_url="https://example.com/avatar.jpg",
             )
             session.add(user)
             session.commit()
@@ -85,8 +94,7 @@ async def get_current_user(
     user = session.get(User, clerk_user_id)
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found in DB"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found in DB"
         )
     return user
 
