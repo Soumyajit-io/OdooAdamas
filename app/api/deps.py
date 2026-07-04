@@ -3,7 +3,6 @@ from fastapi import Depends, Header, HTTPException, status
 from app.schemas.user import UserResponse, UserRole
 
 # TODO: Define Clerk configurations (e.g. CLERK_PEM_PUBLIC_KEYS, CLERK_JWT_AUDIENCE)
-# and database connection/session fetchers.
 
 
 async def get_token_header(authorization: str = Header(None)) -> str:
