@@ -2,44 +2,82 @@ import { createContext, useContext, useState, useEffect } from 'react';
 
 const HRMSContext = createContext();
 
+const normalizeEmployee = (employee = {}) => {
+  const firstName = employee.first_name || employee.firstName || '';
+  const lastName = employee.last_name || employee.lastName || '';
+  const role = (employee.role || 'EMPLOYEE').toUpperCase();
+
+  return {
+    ...employee,
+    id: employee.id || employee.user_id || '',
+    employee_id: employee.employee_id || employee.employeeId || '',
+    role,
+    first_name: firstName,
+    last_name: lastName,
+    name: [firstName, lastName].filter(Boolean).join(' ') || employee.name || '',
+    phone: employee.phone || '',
+    address: employee.address || '',
+    profile_picture_url: employee.profile_picture_url || employee.profilePictureUrl || '',
+    job_title: employee.job_title || employee.jobTitle || '',
+    jobTitle: employee.job_title || employee.jobTitle || '',
+    department: employee.department || '',
+    joining_date: employee.joining_date || employee.joinDate || '',
+    joinDate: employee.joining_date || employee.joinDate || '',
+    salary: employee.salary ?? 0,
+    is_active: employee.is_active ?? true,
+  };
+};
+
 const initialEmployees = [
   {
-    id: 'EMP001',
-    name: 'John Doe',
+    id: 'user_001',
+    employee_id: 'EMP001',
     email: 'john@adamas.com',
-    role: 'Employee',
-    department: 'Engineering',
-    jobTitle: 'Software Engineer',
-    joinDate: '2024-01-15',
-    salary: 5500,
+    role: 'EMPLOYEE',
+    first_name: 'John',
+    last_name: 'Doe',
     phone: '+1 (555) 123-4567',
     address: '123 Tech Lane, Silicon Valley, CA',
+    profile_picture_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+    job_title: 'Software Engineer',
+    department: 'Engineering',
+    joining_date: '2024-01-15',
+    salary: 5500,
+    is_active: true,
   },
   {
-    id: 'EMP002',
-    name: 'Jane Smith',
+    id: 'user_002',
+    employee_id: 'EMP002',
     email: 'jane@adamas.com',
-    role: 'Employee',
-    department: 'Human Resources',
-    jobTitle: 'HR Specialist',
-    joinDate: '2023-06-10',
-    salary: 6000,
+    role: 'EMPLOYEE',
+    first_name: 'Jane',
+    last_name: 'Smith',
     phone: '+1 (555) 987-6543',
     address: '456 People Way, San Francisco, CA',
+    profile_picture_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+    job_title: 'HR Specialist',
+    department: 'Human Resources',
+    joining_date: '2023-06-10',
+    salary: 6000,
+    is_active: true,
   },
   {
-    id: 'EMP003',
-    name: 'Bob Johnson',
+    id: 'user_003',
+    employee_id: 'EMP003',
     email: 'bob@adamas.com',
-    role: 'Admin',
-    department: 'Operations',
-    jobTitle: 'Operations Director',
-    joinDate: '2022-03-01',
-    salary: 8500,
+    role: 'ADMIN',
+    first_name: 'Bob',
+    last_name: 'Johnson',
     phone: '+1 (555) 246-8135',
     address: '789 Executive Blvd, New York, NY',
+    profile_picture_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+    job_title: 'Operations Director',
+    department: 'Operations',
+    joining_date: '2022-03-01',
+    salary: 8500,
+    is_active: true,
   }
-];
+].map(normalizeEmployee);
 
 const initialLeaveRequests = [
   {
@@ -119,12 +157,14 @@ const initialAttendanceLogs = [
 export const HRMSProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('hrms_current_user');
-    return saved ? JSON.parse(saved) : null;
+    const parsed = saved ? JSON.parse(saved) : null;
+    return parsed ? normalizeEmployee(parsed) : null;
   });
 
   const [employees, setEmployees] = useState(() => {
     const saved = localStorage.getItem('hrms_employees');
-    return saved ? JSON.parse(saved) : initialEmployees;
+    const parsed = saved ? JSON.parse(saved) : initialEmployees;
+    return Array.isArray(parsed) ? parsed.map(normalizeEmployee) : initialEmployees;
   });
 
   const [leaveRequests, setLeaveRequests] = useState(() => {
@@ -154,9 +194,9 @@ export const HRMSProvider = ({ children }) => {
         const net = basic + hra + allowance - pf - tax;
         
         slips.push({
-          id: `PAY-${emp.id}-${idx}`,
-          employeeId: emp.id,
-          employeeName: emp.name,
+          id: `PAY-${emp.employee_id}-${idx}`,
+          employeeId: emp.employee_id,
+          employeeName: `${emp.first_name} ${emp.last_name}`,
           month: m,
           basic,
           hra,
@@ -192,8 +232,9 @@ export const HRMSProvider = ({ children }) => {
   const login = (email, password) => {
     const emp = employees.find(e => e.email.toLowerCase() === email.toLowerCase());
     if (emp) {
-      setCurrentUser(emp);
-      localStorage.setItem('hrms_current_user', JSON.stringify(emp));
+      const normalizedEmp = normalizeEmployee(emp);
+      setCurrentUser(normalizedEmp);
+      localStorage.setItem('hrms_current_user', JSON.stringify(normalizedEmp));
       return { success: true };
     }
     return { success: false, message: 'Invalid credentials. Use john@adamas.com (Employee) or bob@adamas.com (Admin)' };
@@ -204,27 +245,35 @@ export const HRMSProvider = ({ children }) => {
     localStorage.removeItem('hrms_current_user');
   };
 
-  const signup = (name, email, password, role, department, jobTitle) => {
+  const signup = (firstName, lastName, email, password, role, department, jobTitle) => {
     const exists = employees.some(e => e.email.toLowerCase() === email.toLowerCase());
     if (exists) {
       return { success: false, message: 'Email already registered.' };
     }
 
-    const newEmp = {
-      id: `EMP${String(employees.length + 1).padStart(3, '0')}`,
-      name,
+    const uppercaseRole = role.toUpperCase() === 'ADMIN' ? 'ADMIN' : 'EMPLOYEE';
+    const newEmpId = `user_${String(employees.length + 1).padStart(3, '0')}`;
+    const newEmployeeId = `EMP${String(employees.length + 1).padStart(3, '0')}`;
+
+    const newEmp = normalizeEmployee({
+      id: newEmpId,
+      employee_id: newEmployeeId,
       email,
-      role,
-      department,
-      jobTitle,
-      joinDate: new Date().toISOString().split('T')[0],
-      salary: role === 'Admin' ? 8000 : 5000,
+      role: uppercaseRole,
+      first_name: firstName,
+      last_name: lastName,
       phone: '+1 (555) 000-0000',
       address: 'Update address in profile',
-    };
+      profile_picture_url: '',
+      job_title: jobTitle || (uppercaseRole === 'ADMIN' ? 'HR Manager' : 'Software Engineer'),
+      department,
+      joining_date: new Date().toISOString().split('T')[0],
+      salary: uppercaseRole === 'ADMIN' ? 8000 : 5000,
+      is_active: true,
+    });
 
     const updated = [...employees, newEmp];
-    setEmployees(updated);
+    setEmployees(updated.map(normalizeEmployee));
     setCurrentUser(newEmp);
     localStorage.setItem('hrms_current_user', JSON.stringify(newEmp));
     
@@ -237,9 +286,9 @@ export const HRMSProvider = ({ children }) => {
     const net = basic + hra + allowance - pf - tax;
     
     const newSlip = {
-      id: `PAY-${newEmp.id}-0`,
-      employeeId: newEmp.id,
-      employeeName: newEmp.name,
+      id: `PAY-${newEmp.employee_id}-0`,
+      employeeId: newEmp.employee_id,
+      employeeName: `${newEmp.first_name} ${newEmp.last_name}`,
       month: 'June 2026',
       basic,
       hra,
@@ -261,7 +310,7 @@ export const HRMSProvider = ({ children }) => {
     const today = new Date().toISOString().split('T')[0];
     
     // Check if already clocked in today
-    const exists = attendanceLogs.some(log => log.employeeId === currentUser.id && log.date === today);
+    const exists = attendanceLogs.some(log => log.employeeId === currentUser.employee_id && log.date === today);
     if (exists) return { success: false, message: 'Already clocked in today.' };
 
     const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -269,7 +318,7 @@ export const HRMSProvider = ({ children }) => {
     
     const newLog = {
       id: `ATT${String(attendanceLogs.length + 1).padStart(3, '0')}`,
-      employeeId: currentUser.id,
+      employeeId: currentUser.employee_id,
       date: today,
       checkIn: timeString,
       checkOut: '',
@@ -285,7 +334,7 @@ export const HRMSProvider = ({ children }) => {
     if (!currentUser) return;
     const today = new Date().toISOString().split('T')[0];
     
-    const logIndex = attendanceLogs.findIndex(log => log.employeeId === currentUser.id && log.date === today && log.checkOut === '');
+    const logIndex = attendanceLogs.findIndex(log => log.employeeId === currentUser.employee_id && log.date === today && log.checkOut === '');
     if (logIndex === -1) return { success: false, message: 'Active check-in not found for today.' };
 
     const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -312,8 +361,8 @@ export const HRMSProvider = ({ children }) => {
     
     const newRequest = {
       id: `LR${String(leaveRequests.length + 1).padStart(3, '0')}`,
-      employeeId: currentUser.id,
-      employeeName: currentUser.name,
+      employeeId: currentUser.employee_id,
+      employeeName: `${currentUser.first_name} ${currentUser.last_name}`,
       type,
       startDate,
       endDate,
@@ -345,7 +394,7 @@ export const HRMSProvider = ({ children }) => {
 
     const newSlips = [];
     employees.forEach(emp => {
-      const alreadyProcessed = payrollSlips.some(p => p.employeeId === emp.id && p.month === currentMonth);
+      const alreadyProcessed = payrollSlips.some(p => p.employeeId === emp.employee_id && p.month === currentMonth);
       if (!alreadyProcessed) {
         const basic = emp.salary * 0.5;
         const hra = emp.salary * 0.3;
@@ -355,9 +404,9 @@ export const HRMSProvider = ({ children }) => {
         const net = basic + hra + allowance - pf - tax;
         
         newSlips.push({
-          id: `PAY-${emp.id}-JUL2026`,
-          employeeId: emp.id,
-          employeeName: emp.name,
+          id: `PAY-${emp.employee_id}-JUL2026`,
+          employeeId: emp.employee_id,
+          employeeName: `${emp.first_name} ${emp.last_name}`,
           month: currentMonth,
           basic,
           hra,
@@ -379,10 +428,10 @@ export const HRMSProvider = ({ children }) => {
   const updateProfile = (fields) => {
     if (!currentUser) return;
     
-    const updatedEmp = {
+    const updatedEmp = normalizeEmployee({
       ...currentUser,
       ...fields
-    };
+    });
 
     setEmployees(prev => prev.map(emp => emp.id === currentUser.id ? updatedEmp : emp));
     setCurrentUser(updatedEmp);

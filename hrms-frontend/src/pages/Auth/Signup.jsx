@@ -5,7 +5,8 @@ import { User, Mail, Shield, Briefcase, FileText, AlertCircle, ArrowRight } from
 
 export default function Signup() {
   const { signup } = useHRMS();
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('Employee');
   const [department, setDepartment] = useState('Engineering');
@@ -19,7 +20,7 @@ export default function Signup() {
     setError('');
     setLoading(true);
     setTimeout(() => {
-      const res = signup(name, email, 'password123', role, department, jobTitle || (role === 'Admin' ? 'HR Manager' : 'Software Engineer'));
+      const res = signup(firstName, lastName, email, 'password123', role, department, jobTitle || (role === 'Admin' ? 'HR Manager' : 'Software Engineer'));
       setLoading(false);
       if (res.success) navigate('/dashboard');
       else setError(res.message);
@@ -70,12 +71,22 @@ export default function Signup() {
             )}
 
             <form className="space-y-4" onSubmit={handleSubmit}>
-              <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--odoo-text)' }}>Full Name</label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'var(--odoo-text-light)' }} />
-                  <input type="text" required value={name} onChange={(e) => setName(e.target.value)}
-                    className="o-input pl-9" placeholder="Jane Doe" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--odoo-text)' }}>First Name</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'var(--odoo-text-light)' }} />
+                    <input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)}
+                      className="o-input pl-9" placeholder="Jane" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--odoo-text)' }}>Last Name</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'var(--odoo-text-light)' }} />
+                    <input type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)}
+                      className="o-input pl-9" placeholder="Doe" />
+                  </div>
                 </div>
               </div>
 

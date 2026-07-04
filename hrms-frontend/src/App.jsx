@@ -22,9 +22,7 @@ import {
   X,
   Bell,
   ChevronDown,
-  Search,
   Settings,
-  HelpCircle,
   Home
 } from 'lucide-react';
 
@@ -36,14 +34,16 @@ function ProtectedRoute({ children }) {
 
 function MainLayout() {
   const { currentUser, logout } = useHRMS();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
+  const isEmployee = currentUser?.role?.toUpperCase() === 'EMPLOYEE';
+  const isAdmin = currentUser?.role?.toUpperCase() === 'ADMIN';
+
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    ...(currentUser?.role === 'Employee' ? [{ name: 'Attendance', href: '/attendance', icon: Clock }] : []),
+    ...(isEmployee ? [{ name: 'Attendance', href: '/attendance', icon: Clock }] : []),
     { name: 'Time Off', href: '/leaves', icon: CalendarDays },
     { name: 'Payroll', href: '/payroll', icon: CreditCard },
     { name: 'My Profile', href: '/profile', icon: User },
@@ -191,9 +191,9 @@ function MainLayout() {
         <div className="max-w-[1400px] mx-auto p-4 md:p-6">
           <Routes>
             <Route path="/dashboard" element={
-              currentUser?.role === 'Admin' ? <AdminDashboard /> : <EmployeeDashboard />
+              isAdmin ? <AdminDashboard /> : <EmployeeDashboard />
             } />
-            {currentUser?.role === 'Employee' && (
+            {isEmployee && (
               <Route path="/attendance" element={<Attendance />} />
             )}
             <Route path="/leaves" element={<LeavePage />} />

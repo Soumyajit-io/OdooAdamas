@@ -1,3 +1,4 @@
+from datetime import date
 from enum import Enum
 from typing import Optional
 
@@ -15,8 +16,11 @@ class UserBasicInfo(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     email: EmailStr
-    job_title: Optional[str] = None
     role: UserRole
+    job_title: Optional[str] = None
+    department: Optional[str] = None
+    joining_date: Optional[date] = None
+    is_active: Optional[bool] = True
 
 
 class UserResponse(BaseModel):
@@ -30,6 +34,9 @@ class UserResponse(BaseModel):
     address: Optional[str] = None
     profile_picture_url: Optional[str] = None
     job_title: Optional[str] = None
+    department: Optional[str] = None
+    joining_date: Optional[date] = None
+    is_active: Optional[bool] = True
 
 
 class UserUpdateSelf(BaseModel):

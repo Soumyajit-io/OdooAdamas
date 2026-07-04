@@ -5,21 +5,15 @@ import App from './App'
 
 import './index.css'
 
-import { ClerkProvider } from '@clerk/clerk-react'
-
 const clerkPubKey =
-import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || 'pk_test_example'
 
+// Render app without ClerkProvider for development
+// ClerkProvider will be integrated later after setting up Clerk project
 ReactDOM.createRoot(
 document.getElementById('root')
 ).render(
-
-<ClerkProvider
-publishableKey={clerkPubKey}
->
-
-<App/>
-
-</ClerkProvider>
-
+  <React.StrictMode>
+    <App/>
+  </React.StrictMode>
 )

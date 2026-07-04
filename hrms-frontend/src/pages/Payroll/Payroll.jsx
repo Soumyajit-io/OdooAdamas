@@ -7,8 +7,8 @@ export default function Payroll() {
   const [selectedSlip, setSelectedSlip] = useState(null);
   const [adminMsg, setAdminMsg] = useState('');
 
-  const isEmployee = currentUser?.role === 'Employee';
-  const mySlips = payrollSlips.filter(slip => slip.employeeId === currentUser?.id);
+  const isEmployee = currentUser?.role?.toUpperCase() === 'EMPLOYEE';
+  const mySlips = payrollSlips.filter(slip => slip.employeeId === currentUser?.employee_id);
   const allSlips = payrollSlips;
   const displaySlips = isEmployee ? mySlips : allSlips;
 

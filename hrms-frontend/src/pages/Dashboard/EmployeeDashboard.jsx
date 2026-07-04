@@ -14,13 +14,13 @@ export default function EmployeeDashboard() {
   }, []);
 
   const todayStr = new Date().toISOString().split('T')[0];
-  const todayLog = attendanceLogs.find(log => log.employeeId === currentUser.id && log.date === todayStr);
+  const todayLog = attendanceLogs.find(log => log.employeeId === currentUser?.employee_id && log.date === todayStr);
   const isClockedIn = todayLog && todayLog.checkIn && !todayLog.checkOut;
   const isClockedOut = todayLog && todayLog.checkOut;
 
-  const myAttendance = attendanceLogs.filter(log => log.employeeId === currentUser.id).slice(0, 5);
-  const myLeaves = leaveRequests.filter(req => req.employeeId === currentUser.id).slice(0, 4);
-  const myLatestSlip = payrollSlips.filter(s => s.employeeId === currentUser.id).sort((a, b) => b.processedDate?.localeCompare(a.processedDate))[0];
+  const myAttendance = attendanceLogs.filter(log => log.employeeId === currentUser?.employee_id).slice(0, 5);
+  const myLeaves = leaveRequests.filter(req => req.employeeId === currentUser?.employee_id).slice(0, 4);
+  const myLatestSlip = payrollSlips.filter(s => s.employeeId === currentUser?.employee_id).sort((a, b) => b.processedDate?.localeCompare(a.processedDate))[0];
 
   const handleClockToggle = () => {
     setClockMsg({ type: '', text: '' });
@@ -37,7 +37,7 @@ export default function EmployeeDashboard() {
 
   // Leave balance mock
   const approvedDays = leaveRequests
-    .filter(req => req.employeeId === currentUser.id && req.status === 'Approved')
+    .filter(req => req.employeeId === currentUser?.employee_id && req.status === 'Approved')
     .reduce((acc, curr) => {
       const days = Math.ceil(Math.abs(new Date(curr.endDate) - new Date(curr.startDate)) / (1000 * 60 * 60 * 24)) + 1;
       return acc + days;
