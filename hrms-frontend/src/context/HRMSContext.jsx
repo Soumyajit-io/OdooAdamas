@@ -347,11 +347,12 @@ export const HRMSProvider = ({ children }) => {
   };
 
   const getEmployeeStatus = (empId) => {
-    const currentLog = attendanceLogs.find((log) => log.employeeId === empId && log.date === today && log.checkIn && !log.checkOut);
+    const todayStr = new Date().toISOString().split('T')[0];
+    const currentLog = attendanceLogs.find((log) => log.employeeId === empId && log.date === todayStr && log.checkIn && !log.checkOut);
     if (currentLog) return 'present';
-    const checkedOutLog = attendanceLogs.find((log) => log.employeeId === empId && log.date === today && log.checkOut);
+    const checkedOutLog = attendanceLogs.find((log) => log.employeeId === empId && log.date === todayStr && log.checkOut);
     if (checkedOutLog) return 'present';
-    const onLeave = leaveRequests.find((leave) => leave.employeeId === empId && leave.status === 'Approved' && leave.startDate <= today && leave.endDate >= today);
+    const onLeave = leaveRequests.find((leave) => leave.employeeId === empId && leave.status === 'Approved' && leave.startDate <= todayStr && leave.endDate >= todayStr);
     if (onLeave) return 'leave';
     return 'absent';
   };
