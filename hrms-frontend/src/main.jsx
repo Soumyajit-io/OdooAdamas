@@ -18,7 +18,7 @@ ReactDOM.createRoot(
   console.log(import.meta.env);
   console.log(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 
-   <ClerkProvider publishableKey={clerkPubKey}>
+   <ClerkProvider publishableKey={clerkPubKey} afterSignInUrl="/dashboard" afterSignUpUrl="/dashboard">
       <App />
    </ClerkProvider>
 
