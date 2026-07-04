@@ -4,6 +4,7 @@ from typing import Optional
 
 from pydantic import BaseModel, EmailStr
 
+
 class UserRole(str, Enum):
     ADMIN = "ADMIN"
     EMPLOYEE = "EMPLOYEE"
