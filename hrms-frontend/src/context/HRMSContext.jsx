@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useUser } from "@clerk/clerk-react";
+import { generateLoginId, generateTempPassword } from '../auth/utils/loginIdGenerator';
 
 
 const HRMSContext = createContext();
@@ -121,13 +122,22 @@ export const HRMSProvider = ({ children }) => {
   });
   const teamMembers = employees;
   const [attendance, setAttendance] = useState([]);
- 
-  
-  
+
+  // Company info state (set during admin signup)
+  const [companyInfo, setCompanyInfo] = useState(() => {
+    const s = localStorage.getItem('hrms_company_info');
+    return s ? JSON.parse(s) : { name: 'Adamas Consulting', initials: 'AC', logoUrl: '' };
+  });
+
+  // Per-year serial counter for Login ID generation
+  const [employeeSerials, setEmployeeSerials] = useState(() => {
+    const s = localStorage.getItem('hrms_employee_serials');
+    return s ? JSON.parse(s) : {};
+  });
+
   const [isClockedIn, setIsClockedIn] = useState(false);
 
   const { user, isLoaded } = useUser();
-  
 
   const [leaveRequests, setLeaveRequests] = useState(() => {
     const s = localStorage.getItem('hrms_leaves');
@@ -177,22 +187,40 @@ export const HRMSProvider = ({ children }) => {
     localStorage.setItem('hrms_payroll', JSON.stringify(payrollSlips));
   }, [payrollSlips]);
   useEffect(() => {
-  localStorage.setItem(
-    'hrms_checkedin_at',
-    checkedInAt || ''
-  );
-}, [checkedInAt]);
+    localStorage.setItem('hrms_checkedin_at', checkedInAt || '');
+  }, [checkedInAt]);
+
+  useEffect(() => {
+    localStorage.setItem('hrms_company_info', JSON.stringify(companyInfo));
+  }, [companyInfo]);
+
+  useEffect(() => {
+    localStorage.setItem('hrms_employee_serials', JSON.stringify(employeeSerials));
+  }, [employeeSerials]);
+
+  // Helper: get next serial number for a given year
+  const getNextSerial = (year) => {
+    const yearStr = String(year);
+    const current = employeeSerials[yearStr] || 0;
+    const next = current + 1;
+    setEmployeeSerials(prev => ({ ...prev, [yearStr]: next }));
+    return next;
+  };
 
   // Auth Operations
-  const login = (email, password) => {
-    const emp = employees.find(e => e.email.toLowerCase() === email.toLowerCase());
+  const login = (emailOrLoginId, password) => {
+    // Match by email OR by employee_id (Login ID)
+    const input = emailOrLoginId.trim().toLowerCase();
+    const emp = employees.find(
+      e => e.email.toLowerCase() === input || (e.employee_id && e.employee_id.toLowerCase() === input)
+    );
     if (emp) {
       const normalizedEmp = normalizeEmployee(emp);
       setEmployee(normalizedEmp);
       localStorage.setItem('hrms_current_user', JSON.stringify(normalizedEmp));
       return { success: true };
     }
-    return { success: false, message: 'Invalid credentials. Try john@adamas.com or bob@adamas.com' };
+    return { success: false, message: 'Invalid credentials. Check your Login ID or Email.' };
   };
 
   const logout = () => {
@@ -200,45 +228,77 @@ export const HRMSProvider = ({ children }) => {
     localStorage.removeItem('hrms_current_user');
   };
 
-  const signup = (firstName, lastName, email, password, role, department, jobTitle) => {
+  const signup = (firstName, lastName, email, password, role, department, jobTitle, companyName, companyLogo, phone) => {
     if (employees.some((e) => e.email.toLowerCase() === email.toLowerCase())) {
       return { success: false, message: 'Email already registered.' };
     }
+
+    // Update company info if provided (admin onboarding)
+    const cName = companyName || companyInfo.name;
+    if (companyName) {
+      const newCompanyInfo = {
+        name: companyName,
+        initials: companyName.trim().split(/\s+/).map(w => w.charAt(0).toUpperCase()).join(''),
+        logoUrl: companyLogo || '',
+      };
+      setCompanyInfo(newCompanyInfo);
+    }
+
     const r = role?.toUpperCase() === 'ADMIN' ? 'ADMIN' : 'EMPLOYEE';
+    const joiningYear = new Date().getFullYear();
+    const serial = getNextSerial(joiningYear);
+    const loginId = generateLoginId(cName, firstName, lastName, joiningYear, serial);
+    const tempPassword = generateTempPassword(loginId);
+
     const newEmp = normalizeEmployee({
       id: `u${employees.length + 1}`,
-      employee_id: `EMP${String(employees.length + 1).padStart(3, '0')}`,
+      employee_id: loginId,
       email,
+      phone: phone || '',
       role: r,
       first_name: firstName,
       last_name: lastName,
-      job_title: jobTitle || 'New Employee',
-      department: department || 'General',
+      job_title: jobTitle || 'Company Administrator',
+      department: department || 'Management',
       joining_date: new Date().toISOString().split('T')[0],
       salary: r === 'ADMIN' ? 80000 : 40000,
+      company: cName,
     });
 
     const updated = [...employees, newEmp];
     setEmployees(updated.map(normalizeEmployee));
-    setEmployee(newEmp);
-    localStorage.setItem('hrms_current_user', JSON.stringify(newEmp));
-    return { success: true };
+    // Don't auto-login on signup — redirect to sign in instead
+    return { success: true, loginId, tempPassword };
   };
 
   const addEmployee = (data) => {
     if (employees.some((e) => e.email.toLowerCase() === data.email.toLowerCase())) {
       return { success: false, message: 'Email already exists.' };
     }
+
+    const joiningDate = data.joining_date || new Date().toISOString().split('T')[0];
+    const joiningYear = new Date(joiningDate).getFullYear();
+    const serial = getNextSerial(joiningYear);
+    const loginId = generateLoginId(
+      companyInfo.name,
+      data.first_name || data.firstName || '',
+      data.last_name || data.lastName || '',
+      joiningYear,
+      serial
+    );
+    const tempPassword = generateTempPassword(loginId);
+
     const newEmp = normalizeEmployee({
       id: `u${employees.length + 1}`,
-      employee_id: `EMP${String(employees.length + 1).padStart(3, '0')}`,
+      employee_id: loginId,
       ...data,
       role: 'EMPLOYEE',
-      joining_date: data.joining_date || new Date().toISOString().split('T')[0],
+      joining_date: joiningDate,
       salary: data.salary || 40000,
+      company: companyInfo.name,
     });
     setEmployees((prev) => [...prev, newEmp]);
-    return { success: true, employee: newEmp };
+    return { success: true, employee: newEmp, loginId, tempPassword };
   };
 
   const clockIn = () => {
@@ -367,9 +427,8 @@ export const HRMSProvider = ({ children }) => {
       avatarColors,
       teamMembers,
       attendance,
-      
+      companyInfo,
       isClockedIn,
-      
       checkedInAt,
       login,
       logout,

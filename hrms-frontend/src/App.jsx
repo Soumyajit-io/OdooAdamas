@@ -26,15 +26,10 @@ import {
   Home,
 } from 'lucide-react';
 
-import { useUser } from "@clerk/clerk-react";
-
 function ProtectedRoute({ children }) {
+  const { employee } = useHRMS();
 
-  const { isLoaded, isSignedIn } = useUser();
-
-  if (!isLoaded) return null;
-
-  if (!isSignedIn) {
+  if (!employee) {
     return <Navigate to="/login" replace />;
   }
 
@@ -201,16 +196,16 @@ function MainLayout() {
 }
 
 function MainApp() {
-  const { isLoaded, isSignedIn } = useUser();
-  if (!isLoaded) return null;
+  const { employee } = useHRMS();
+
   return (
     <Router>
       <Routes>
         <Route path="/login" element={
-          isSignedIn ? <Navigate to="/dashboard" replace /> : <Login />
+          employee ? <Navigate to="/employees" replace /> : <Login />
         } />
         <Route path="/signup" element={
-          isSignedIn ? <Navigate to="/dashboard" replace /> : <Signup />
+          employee ? <Navigate to="/employees" replace /> : <Signup />
         } />
         <Route path="/*" element={
           <ProtectedRoute>
