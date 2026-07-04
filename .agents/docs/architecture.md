@@ -38,58 +38,92 @@ The application follows a standard client-server architecture:
 ## 3. Database Schema
 
 ### 3.1 `users` Table
-Stores profile data synced from Clerk and HR-specific data.
+Stores employee profile information and authentication data synchronized from Clerk.
 | Column | Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
-| `id` | VARCHAR | Primary Key | Clerk User ID (`user_...`) |
-| `employee_id` | VARCHAR | Unique | Org-level employee ID |
-| `email` | VARCHAR | Unique | User's email |
+| `id` | VARCHAR | Primary Key | Clerk User ID (`user_xxx`) |
+| `employee_id` | VARCHAR(20) | Unique, Not Null | Organization employee identifier |
+| `email` | VARCHAR(255) | Unique, Not Null | Employee email address |
 | `role` | ENUM | Not Null | `ADMIN` or `EMPLOYEE` |
-| `first_name` | VARCHAR | | Employee first name |
-| `last_name` | VARCHAR | | Employee last name |
-| `phone` | VARCHAR | | Phone number |
+| `first_name` | VARCHAR(100) | | Employee first name |
+| `last_name` | VARCHAR(100) | | Employee last name |
+| `phone` | VARCHAR(20) | | Contact number |
 | `address` | TEXT | | Residential address |
-| `profile_picture_url`| VARCHAR | | URL to profile picture (from Clerk) |
-| `job_title` | VARCHAR | | E.g., Software Engineer |
-| `created_at` | TIMESTAMP | | Record creation date |
+| `profile_picture_url`| TEXT | | Profile picture URL |
+| `job_title` | VARCHAR(100) | | Employee designation |
+| `department` | VARCHAR(100) | | Department name |
+| `joining_date` | DATE | Default: Current Date | Employee joining date |
+| `is_active` | BOOLEAN | Default: TRUE | Indicates whether the employee is active |
+| `created_at` | TIMESTAMP | Default: Current Timestamp | Record creation time |
+| `updated_at` | TIMESTAMP | Default: Current Timestamp | Last update time |
 
 ### 3.2 `attendance` Table
-Tracks daily employee check-ins/check-outs.
+Stores daily attendance records for employees.
 | Column | Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
-| `id` | UUID | Primary Key | Unique identifier |
+| `id` | UUID | Primary Key | Unique attendance identifier |
 | `user_id` | VARCHAR | Foreign Key | References `users(id)` |
-| `date` | DATE | Not Null | Date of attendance |
-| `check_in` | TIMESTAMP | | Time of check-in |
-| `check_out` | TIMESTAMP | | Time of check-out |
+| `date` | DATE | Not Null | Attendance date |
+| `check_in` | TIMESTAMP | | Employee check-in time |
+| `check_out` | TIMESTAMP | | Employee check-out time |
+| `working_hours` | DECIMAL(4,2) | | Total working hours for the day |
 | `status` | ENUM | Not Null | `PRESENT`, `ABSENT`, `HALF_DAY`, `LEAVE`|
+| `created_at` | TIMESTAMP | Default: Current Timestamp | Record creation time |
+
+**Constraint:**
+- `UNIQUE(user_id, date)` to prevent multiple attendance records for the same employee on the same day.
 
 ### 3.3 `leave_requests` Table
-Manages employee leave applications.
+Stores employee leave applications and approval information.
 | Column | Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
-| `id` | UUID | Primary Key | Unique identifier |
+| `id` | UUID | Primary Key | Unique leave request identifier |
 | `user_id` | VARCHAR | Foreign Key | References `users(id)` |
 | `leave_type` | ENUM | Not Null | `PAID`, `SICK`, `UNPAID` |
 | `start_date` | DATE | Not Null | Leave start date |
 | `end_date` | DATE | Not Null | Leave end date |
 | `status` | ENUM | Default: PENDING| `PENDING`, `APPROVED`, `REJECTED`|
 | `remarks` | TEXT | | Employee reason for leave |
-| `admin_comments`| TEXT | | Admin feedback |
-| `created_at` | TIMESTAMP | | Submission time |
+| `approved_by` | VARCHAR | Foreign Key | References `users(id)` (Admin who approved/rejected) |
+| `admin_comments`| TEXT | | Admin feedback or remarks |
+| `created_at` | TIMESTAMP | Default: Current Timestamp | Submission time |
 
 ### 3.4 `payroll` Table
-Manages salary structures and payroll history.
+Stores employee salary structures and payroll history.
 | Column | Type | Constraints | Description |
 | :--- | :--- | :--- | :--- |
-| `id` | UUID | Primary Key | Unique identifier |
+| `id` | UUID | Primary Key | Unique payroll record identifier |
 | `user_id` | VARCHAR | Foreign Key | References `users(id)` |
-| `base_salary` | DECIMAL | Not Null | Base pay amount |
-| `allowances` | DECIMAL | Default: 0 | Additional pay (bonus, etc) |
-| `deductions` | DECIMAL | Default: 0 | Tax, unpaid leave deductions|
-| `net_salary` | DECIMAL | Not Null | Final calculated salary |
-| `pay_period_start` | DATE | Not Null | Period start date |
-| `pay_period_end` | DATE | Not Null | Period end date |
+| `base_salary` | DECIMAL(12,2) | Not Null | Employee base salary |
+| `allowances` | DECIMAL(12,2) | Default: 0 | Bonuses and additional compensation |
+| `deductions` | DECIMAL(12,2) | Default: 0 | Taxes and other deductions |
+| `net_salary` | DECIMAL(12,2) | Not Null | Final payable amount |
+| `pay_period_start` | DATE | Not Null | Payroll period start date |
+| `pay_period_end` | DATE | Not Null | Payroll period end date |
+| `generated_at` | TIMESTAMP | Default: Current Timestamp | Payroll generation time |
+
+**Constraint:**
+- `UNIQUE(user_id, pay_period_start, pay_period_end)` to avoid duplicate payroll records for the same period.
+
+### 3.5 `documents` Table
+Stores employee-related documents uploaded to Supabase Storage.
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | UUID | Primary Key | Unique document identifier |
+| `user_id` | VARCHAR | Foreign Key | References `users(id)` |
+| `document_name` | VARCHAR(255) | Not Null | Name of the uploaded document |
+| `document_url` | TEXT | Not Null | Supabase Storage URL |
+| `uploaded_at` | TIMESTAMP | Default: Current Timestamp | Upload time |
+
+### 3.6 `announcements` Table (Optional)
+Stores organization-wide announcements made by administrators.
+| Column | Type | Constraints | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | UUID | Primary Key | Unique announcement identifier |
+| `title` | VARCHAR(255) | Not Null | Announcement title |
+| `content` | TEXT | Not Null | Announcement details |
+| `created_by` | VARCHAR | Foreign Key | References `users(id)` |
+| `created_at` | TIMESTAMP | Default: Current Timestamp | Creation time |
 
 ---
 
