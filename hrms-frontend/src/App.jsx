@@ -22,9 +22,7 @@ import {
   X,
   Bell,
   ChevronDown,
-  Search,
   Settings,
-  HelpCircle,
   Home
 } from 'lucide-react';
 
@@ -36,7 +34,6 @@ function ProtectedRoute({ children }) {
 
 function MainLayout() {
   const { currentUser, logout } = useHRMS();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
