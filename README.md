@@ -125,17 +125,7 @@ Rag/
 - *"What is the work-from-home policy?"*
 - *"How is HRA calculated?"*
 
-## 🤝 Contributing
 
-We welcome contributions from the community! To ensure a smooth process, please follow these steps:
-
-1. Fork the repository.
-2. Create a new branch (`git checkout -b feature/AmazingFeature`).
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
-4. Push to the branch (`git push origin feature/AmazingFeature`).
-5. Open a Pull Request.
-
-Please make sure to update tests as appropriate.
 
 ## 🎨 Design Reference
 - Excalidraw: [Link](https://link.excalidraw.com/l/65VNwvy7c4X/58RLEJ4oOwh)
