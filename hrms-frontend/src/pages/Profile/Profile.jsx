@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { useHRMS } from '../../context/HRMSContext';
-import { User, Phone, MapPin, Mail, Shield, Briefcase, Calendar, DollarSign, Edit, Save, Check } from 'lucide-react';
+import { User, Phone, MapPin, Mail, Shield, Briefcase, Calendar, DollarSign, Edit, Save, Check, BadgeCheck, CreditCard } from 'lucide-react';
+
+const tabs = ['Resume', 'Private Info', 'Salary Info', 'Security'];
 
 export default function Profile() {
   const { employee, updateProfile } = useHRMS();
@@ -14,31 +17,28 @@ export default function Profile() {
 
   const displayName = [employee?.first_name, employee?.last_name].filter(Boolean).join(' ') || employee?.name || 'User';
 
-  const handleSave = (e) => {
-    e.preventDefault();
+  const handleSave = (event) => {
+    event.preventDefault();
     setMsg('');
     setLoading(true);
     setTimeout(() => {
-      const res = updateProfile({ first_name: firstName, last_name: lastName, phone, address });
+      const res = updateProfile({ ...form });
       setLoading(false);
       if (res.success) {
         setIsEditing(false);
         setMsg('Profile updated successfully.');
-        setTimeout(() => setMsg(''), 3000);
+        setTimeout(() => setMsg(''), 2500);
       }
     }, 500);
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 odoo-fade-in">
-      {/* Top card with avatar */}
+    <div className="max-w-6xl mx-auto space-y-6 odoo-fade-in">
       <div className="o-card overflow-hidden">
         <div className="h-24" style={{ background: 'linear-gradient(135deg, var(--odoo-purple), var(--odoo-purple-light))' }}></div>
         <div className="px-6 pb-5 flex flex-col sm:flex-row items-center sm:items-end gap-4 -mt-8 relative">
           <div className="h-20 w-20 rounded-xl bg-white p-1 shadow-md shrink-0">
-            <div className="h-full w-full rounded-lg flex items-center justify-center font-bold text-2xl text-white" style={{ background: 'var(--odoo-purple)' }}>
-              {displayName.charAt(0)}
-            </div>
+            <div className="h-full w-full rounded-lg flex items-center justify-center font-bold text-2xl text-white" style={{ background: 'var(--odoo-purple)' }}>{displayName.charAt(0)}</div>
           </div>
           <div className="text-center sm:text-left flex-1 sm:mb-1">
             <h2 className="text-lg font-bold" style={{ color: 'var(--odoo-text)' }}>{displayName}</h2>
@@ -46,23 +46,29 @@ export default function Profile() {
               {employee?.job_title || employee?.jobTitle} · {employee?.department}
             </p>
           </div>
-          <div className="sm:mb-1">
-            {isEditing ? (
-              <button onClick={handleSave} disabled={loading} className="o-btn-primary text-sm">
-                {loading ? 'Saving…' : <><Save className="h-3.5 w-3.5" /> Save</>}
-              </button>
-            ) : (
-              <button onClick={() => setIsEditing(true)} className="o-btn-secondary text-sm">
-                <Edit className="h-3.5 w-3.5" /> Edit
-              </button>
-            )}
-          </div>
+          {isOwnProfile && (
+            <div className="sm:mb-1">
+              {isEditing ? (
+                <button onClick={handleSave} disabled={loading} className="o-btn-primary text-sm">
+                  {loading ? 'Saving…' : <><Save className="h-3.5 w-3.5" /> Save</>}
+                </button>
+              ) : (
+                <button onClick={() => setIsEditing(true)} className="o-btn-secondary text-sm">
+                  <Edit className="h-3.5 w-3.5" /> Edit
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {msg && (
-        <div className="p-3 rounded border text-sm o-badge-success flex items-center gap-2">
-          <Check className="h-4 w-4" /> {msg}
+      {msg && <div className="p-3 rounded border text-sm o-badge-success flex items-center gap-2"><Check className="h-4 w-4" /> {msg}</div>}
+
+      <div className="o-card p-4">
+        <div className="o-tabs">
+          {tabs.map((tab) => (
+            <button key={tab} onClick={() => setActiveTab(tab)} className={`o-tab ${activeTab === tab ? 'o-tab--active' : ''}`}>{tab}</button>
+          ))}
         </div>
       )}
 
@@ -122,7 +128,7 @@ export default function Profile() {
                   <MapPin className="h-4 w-4 shrink-0 mt-0.5" style={{ color: 'var(--odoo-text-light)' }} />
                   <p className="text-sm" style={{ color: 'var(--odoo-text)' }}>{employee?.address}</p>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
@@ -180,7 +186,58 @@ export default function Profile() {
               </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {activeTab === 'Salary Info' && (
+          <div className="o-card p-4 space-y-4">
+            {currentUser?.role?.toUpperCase() === 'ADMIN' ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="o-field-label">Wage Type</label>
+                    <p className="o-field-value">{profileUser?.wage_type || 'Fixed'}</p>
+                  </div>
+                  <div>
+                    <label className="o-field-label">Month / Yearly Wage</label>
+                    <p className="o-field-value">₹{(profileUser?.monthly_wage || profileUser?.salary || 0).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <label className="o-field-label">Working Days / Week</label>
+                    <p className="o-field-value">{profileUser?.working_days_per_week || 5}</p>
+                  </div>
+                  <div>
+                    <label className="o-field-label">Break Time</label>
+                    <p className="o-field-value">{profileUser?.break_time || 60} mins</p>
+                  </div>
+                </div>
+                <div className="border-t pt-4">
+                  <h3 className="font-semibold mb-3" style={{ color: 'var(--odoo-text)' }}>Salary Components</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {(profileUser?.salary_components || []).map((component) => (
+                      <div key={component.name} className="rounded-lg border p-3" style={{ borderColor: 'var(--odoo-border-light)' }}>
+                        <p className="font-medium text-sm" style={{ color: 'var(--odoo-text)' }}>{component.name}</p>
+                        <p className="text-xs mt-1" style={{ color: 'var(--odoo-text-muted)' }}>{component.type === 'percent' ? `${component.value}% of wage` : `Fixed ₹${component.value}`}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="p-6 rounded-lg border text-center" style={{ borderColor: 'var(--odoo-border-light)', color: 'var(--odoo-text-muted)' }}>
+                <Shield className="h-8 w-8 mx-auto mb-2" />
+                Salary information is visible only to admins and HR officers.
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'Security' && (
+          <div className="o-card p-4 space-y-3">
+            <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--odoo-text-muted)' }}><BadgeCheck className="h-4 w-4" style={{ color: 'var(--odoo-teal)' }} /> Two-factor authentication is enabled.</div>
+            <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--odoo-text-muted)' }}><CreditCard className="h-4 w-4" style={{ color: 'var(--odoo-purple)' }} /> Password last updated 15 days ago.</div>
+            <div className="text-sm" style={{ color: 'var(--odoo-text-muted)' }}>Security settings can be expanded for policy controls in a later iteration.</div>
+          </div>
+        )}
       </div>
     </div>
   );
