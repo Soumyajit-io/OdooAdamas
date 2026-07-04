@@ -27,3 +27,7 @@ Thumbs.db
 
 # cache
 .cache/
+Rag/__pycache__/
+        Rag/agent/__pycache__/
+        Rag/prompts/__pycache__/
+        Rag/tool/__pycache__/
