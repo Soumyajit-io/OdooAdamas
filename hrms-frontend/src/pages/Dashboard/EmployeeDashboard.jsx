@@ -4,7 +4,7 @@ import { Clock, ArrowRight, Plane } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function EmployeeDashboard() {
-  const { employee, attendanceLogs, leaveRequests, payrollSlips, clockIn, clockOut } = useHRMS();
+  const { employee, attendanceLogs, leaveRequests,teamMembers, payrollSlips, clockIn, clockOut } = useHRMS();
   const [time, setTime] = useState(new Date());
   const [clockMsg, setClockMsg] = useState({ type: '', text: '' });
 
@@ -136,10 +136,10 @@ export default function EmployeeDashboard() {
       <div className="o-card p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-[15px]" style={{ color: 'var(--odoo-text)' }}>Your Team</h3>
-          <span className="text-xs font-medium" style={{ color: 'var(--odoo-text-muted)' }}>{teamMembers.length} colleagues</span>
+          <span className="text-xs font-medium" style={{ color: 'var(--odoo-text-muted)' }}>{teamMembers?.length || 0} colleagues</span>
         </div>
         <div className="emp-grid">
-          {teamMembers.map((employee) => {
+          {(teamMembers || []).map(member => {
             const status = getEmployeeStatus(employee.employee_id);
             return (
               <Link key={employee.id} to={`/profile/${employee.employee_id}`} className="emp-card">
