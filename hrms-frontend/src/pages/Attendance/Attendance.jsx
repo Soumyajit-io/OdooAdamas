@@ -3,7 +3,7 @@ import { CalendarDays, CheckCircle, AlertTriangle, Clock3, Clock } from 'lucide-
 
 export default function Attendance() {
   const { currentUser, attendanceLogs } = useHRMS();
-  const myLogs = attendanceLogs.filter(log => log.employeeId === currentUser?.id);
+  const myLogs = attendanceLogs.filter(log => log.employeeId === currentUser?.employee_id);
 
   const totalDays = myLogs.length;
   const onTimeDays = myLogs.filter(log => log.status === 'On-time').length;

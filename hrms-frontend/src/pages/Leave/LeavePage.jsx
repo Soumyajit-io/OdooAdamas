@@ -11,8 +11,8 @@ export default function LeavePage() {
   const [reason, setReason] = useState('');
   const [msg, setMsg] = useState('');
 
-  const isEmployee = currentUser?.role === 'Employee';
-  const myRequests = leaveRequests.filter(req => req.employeeId === currentUser?.id);
+  const isEmployee = currentUser?.role?.toUpperCase() === 'EMPLOYEE';
+  const myRequests = leaveRequests.filter(req => req.employeeId === currentUser?.employee_id);
 
   const handleSubmit = (e) => {
     e.preventDefault();

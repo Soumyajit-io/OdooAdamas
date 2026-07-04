@@ -5,18 +5,21 @@ import { User, Phone, MapPin, Mail, Shield, Briefcase, Calendar, DollarSign, Edi
 export default function Profile() {
   const { currentUser, updateProfile } = useHRMS();
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState(currentUser?.name || '');
+  const [firstName, setFirstName] = useState(currentUser?.first_name || '');
+  const [lastName, setLastName] = useState(currentUser?.last_name || '');
   const [phone, setPhone] = useState(currentUser?.phone || '');
   const [address, setAddress] = useState(currentUser?.address || '');
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const displayName = [currentUser?.first_name, currentUser?.last_name].filter(Boolean).join(' ') || currentUser?.name || 'User';
 
   const handleSave = (e) => {
     e.preventDefault();
     setMsg('');
     setLoading(true);
     setTimeout(() => {
-      const res = updateProfile({ name, phone, address });
+      const res = updateProfile({ first_name: firstName, last_name: lastName, phone, address });
       setLoading(false);
       if (res.success) {
         setIsEditing(false);
@@ -34,13 +37,13 @@ export default function Profile() {
         <div className="px-6 pb-5 flex flex-col sm:flex-row items-center sm:items-end gap-4 -mt-8 relative">
           <div className="h-20 w-20 rounded-xl bg-white p-1 shadow-md shrink-0">
             <div className="h-full w-full rounded-lg flex items-center justify-center font-bold text-2xl text-white" style={{ background: 'var(--odoo-purple)' }}>
-              {currentUser?.name.charAt(0)}
+              {displayName.charAt(0)}
             </div>
           </div>
           <div className="text-center sm:text-left flex-1 sm:mb-1">
-            <h2 className="text-lg font-bold" style={{ color: 'var(--odoo-text)' }}>{currentUser?.name}</h2>
+            <h2 className="text-lg font-bold" style={{ color: 'var(--odoo-text)' }}>{displayName}</h2>
             <p className="text-sm" style={{ color: 'var(--odoo-text-muted)' }}>
-              {currentUser?.jobTitle} · {currentUser?.department}
+              {currentUser?.job_title || currentUser?.jobTitle} · {currentUser?.department}
             </p>
           </div>
           <div className="sm:mb-1">
@@ -71,13 +74,23 @@ export default function Profile() {
           </h3>
 
           <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--odoo-text-muted)' }}>Full Name</label>
-              {isEditing ? (
-                <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="o-input" />
-              ) : (
-                <p className="text-sm font-medium" style={{ color: 'var(--odoo-text)' }}>{currentUser?.name}</p>
-              )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--odoo-text-muted)' }}>First Name</label>
+                {isEditing ? (
+                  <input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className="o-input" />
+                ) : (
+                  <p className="text-sm font-medium" style={{ color: 'var(--odoo-text)' }}>{currentUser?.first_name}</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1" style={{ color: 'var(--odoo-text-muted)' }}>Last Name</label>
+                {isEditing ? (
+                  <input type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} className="o-input" />
+                ) : (
+                  <p className="text-sm font-medium" style={{ color: 'var(--odoo-text)' }}>{currentUser?.last_name}</p>
+                )}
+              </div>
             </div>
 
             <div>
@@ -123,7 +136,7 @@ export default function Profile() {
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-medium mb-1" style={{ color: 'var(--odoo-text-muted)' }}>Employee ID</label>
-              <p className="text-sm font-mono font-bold" style={{ color: 'var(--odoo-text)' }}>{currentUser?.id}</p>
+              <p className="text-sm font-mono font-bold" style={{ color: 'var(--odoo-text)' }}>{currentUser?.employee_id}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -146,7 +159,7 @@ export default function Profile() {
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1" style={{ color: 'var(--odoo-text-muted)' }}>Job Title</label>
-                <p className="text-sm font-medium" style={{ color: 'var(--odoo-text)' }}>{currentUser?.jobTitle}</p>
+                <p className="text-sm font-medium" style={{ color: 'var(--odoo-text)' }}>{currentUser?.job_title || currentUser?.jobTitle}</p>
               </div>
             </div>
 
@@ -155,14 +168,14 @@ export default function Profile() {
                 <label className="block text-xs font-medium mb-1" style={{ color: 'var(--odoo-text-muted)' }}>Join Date</label>
                 <div className="flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5" style={{ color: 'var(--odoo-text-light)' }} />
-                  <p className="text-sm" style={{ color: 'var(--odoo-text)' }}>{currentUser?.joinDate}</p>
+                  <p className="text-sm" style={{ color: 'var(--odoo-text)' }}>{currentUser?.joining_date || currentUser?.joinDate}</p>
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1" style={{ color: 'var(--odoo-text-muted)' }}>Salary</label>
                 <div className="flex items-center gap-1">
                   <DollarSign className="h-3.5 w-3.5" style={{ color: 'var(--odoo-text-light)' }} />
-                  <p className="text-sm font-medium" style={{ color: 'var(--odoo-text)' }}>{currentUser?.salary.toLocaleString()}/mo</p>
+                  <p className="text-sm font-medium" style={{ color: 'var(--odoo-text)' }}>{(currentUser?.salary || 0).toLocaleString()}/mo</p>
                 </div>
               </div>
             </div>
