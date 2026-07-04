@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useHRMS } from '../../context/HRMSContext';
-import { Briefcase, Lock, Mail, AlertCircle, ArrowRight } from 'lucide-react';
+import { Lock, Mail, AlertCircle, ArrowRight, User } from 'lucide-react';
 
 export default function Login() {
   const { login } = useHRMS();
@@ -15,7 +15,6 @@ export default function Login() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     setTimeout(() => {
       const res = login(email, password);
       setLoading(false);
@@ -24,7 +23,7 @@ export default function Login() {
       } else {
         setError(res.message);
       }
-    }, 600);
+    }, 500);
   };
 
   const handleQuickLogin = (demoEmail) => {
@@ -32,133 +31,154 @@ export default function Login() {
     setPassword('password123');
     setError('');
     setLoading(true);
-    
     setTimeout(() => {
       const res = login(demoEmail, 'password123');
       setLoading(false);
-      if (res.success) {
-        navigate('/dashboard');
-      } else {
-        setError(res.message);
-      }
-    }, 400);
+      if (res.success) navigate('/dashboard');
+      else setError(res.message);
+    }, 300);
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
-
-      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
-        <div className="flex justify-center">
-          <div className="bg-indigo-600 p-3 rounded-2xl text-white shadow-xl shadow-indigo-600/30">
-            <Briefcase className="h-10 w-10" />
+    <div className="min-h-screen flex" style={{ background: 'var(--odoo-bg)' }}>
+      {/* Left: Purple branding panel */}
+      <div className="hidden lg:flex lg:w-[45%] flex-col justify-center items-center relative overflow-hidden" style={{ background: 'var(--odoo-purple)' }}>
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-[10%] left-[15%] w-64 h-64 rounded-full border-2 border-white/30"></div>
+          <div className="absolute bottom-[15%] right-[10%] w-48 h-48 rounded-full border-2 border-white/20"></div>
+          <div className="absolute top-[50%] left-[60%] w-32 h-32 rounded-full border border-white/20"></div>
+        </div>
+        <div className="relative z-10 text-center px-12 max-w-md">
+          <div className="h-20 w-20 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center mx-auto mb-8">
+            <span className="text-4xl font-black text-white">A</span>
+          </div>
+          <h1 className="text-4xl font-bold text-white mb-4">Adamas HRMS</h1>
+          <p className="text-white/80 text-lg leading-relaxed">
+            The all-in-one Human Resource Management System. Manage your workforce, streamline processes, and empower your team.
+          </p>
+          <div className="mt-10 flex items-center justify-center gap-6 text-white/60 text-sm">
+            <span>✓ Attendance</span>
+            <span>✓ Payroll</span>
+            <span>✓ Time Off</span>
           </div>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-white tracking-tight">
-          Sign in to Adamas HRMS
-        </h2>
-        <p className="mt-2 text-center text-sm text-slate-400">
-          Or{' '}
-          <Link to="/signup" className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">
-            create a new employee account
-          </Link>
-        </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
-        <div className="bg-slate-800/80 backdrop-blur-md py-8 px-4 shadow-2xl border border-slate-700/50 sm:rounded-2xl sm:px-10">
-          
-          {error && (
-            <div className="mb-6 bg-rose-500/10 border border-rose-500/30 text-rose-300 p-4 rounded-xl text-sm flex items-start gap-3 animate-pulse-slow">
-              <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </div>
-          )}
+      {/* Right: Login form */}
+      <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-8">
+        <div className="w-full max-w-[400px] mx-auto">
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-300">
-                Email Address
-              </label>
-              <div className="mt-1.5 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
-                  <Mail className="h-5 w-5" />
-                </div>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-10 pr-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                  placeholder="name@adamas.com"
-                />
+          {/* Mobile brand */}
+          <div className="lg:hidden text-center mb-8">
+            <div className="h-14 w-14 rounded-xl flex items-center justify-center mx-auto mb-3 text-white font-black text-2xl" style={{ background: 'var(--odoo-purple)' }}>
+              A
+            </div>
+            <h1 className="text-xl font-bold" style={{ color: 'var(--odoo-text)' }}>Adamas HRMS</h1>
+          </div>
+
+          <div className="bg-white rounded-lg border p-8 shadow-sm" style={{ borderColor: 'var(--odoo-border)' }}>
+            <h2 className="text-xl font-bold mb-1" style={{ color: 'var(--odoo-text)' }}>Sign In</h2>
+            <p className="text-sm mb-6" style={{ color: 'var(--odoo-text-muted)' }}>
+              Enter your credentials to access the dashboard.
+            </p>
+
+            {error && (
+              <div className="mb-5 p-3 rounded border text-sm flex items-start gap-2" style={{ background: '#F8D7DA', borderColor: '#F5C6CB', color: '#721C24' }}>
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <span>{error}</span>
               </div>
-            </div>
+            )}
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-300">
-                Password
-              </label>
-              <div className="mt-1.5 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
-                  <Lock className="h-5 w-5" />
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--odoo-text)' }}>
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'var(--odoo-text-light)' }} />
+                  <input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="o-input pl-9"
+                    placeholder="name@adamas.com"
+                  />
                 </div>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 pr-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                  placeholder="••••••••"
-                />
               </div>
-            </div>
 
-            <div>
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium mb-1.5" style={{ color: 'var(--odoo-text)' }}>
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'var(--odoo-text-light)' }} />
+                  <input
+                    id="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="o-input pl-9"
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-xl shadow-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="o-btn-primary w-full justify-center py-2.5 text-sm"
+                style={{ borderRadius: '6px' }}
               >
-                {loading ? 'Authenticating...' : 'Sign In'}
+                {loading ? 'Signing in…' : 'Sign In'}
                 {!loading && <ArrowRight className="h-4 w-4" />}
               </button>
-            </div>
-          </form>
+            </form>
 
-          {/* Quick Login Presets */}
-          <div className="mt-8 border-t border-slate-700 pt-6">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block text-center mb-4">
-              Demo Presets (Quick Access)
-            </span>
+            <div className="mt-5 text-center">
+              <span className="text-xs" style={{ color: 'var(--odoo-text-muted)' }}>Don't have an account? </span>
+              <Link to="/signup" className="text-xs font-medium hover:underline" style={{ color: 'var(--odoo-purple)' }}>
+                Create one
+              </Link>
+            </div>
+          </div>
+
+          {/* Quick-access demo cards */}
+          <div className="mt-6">
+            <p className="text-xs font-medium text-center mb-3" style={{ color: 'var(--odoo-text-muted)' }}>
+              QUICK DEMO ACCESS
+            </p>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => handleQuickLogin('john@adamas.com')}
-                className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-700 bg-slate-750 hover:bg-slate-700 text-slate-200 transition-colors hover:border-indigo-500/50"
+                className="bg-white border rounded-lg p-3 text-center hover:shadow transition-shadow cursor-pointer"
+                style={{ borderColor: 'var(--odoo-border)' }}
               >
-                <span className="text-sm font-semibold">Demo Employee</span>
-                <span className="text-[10px] text-slate-400">John Doe</span>
+                <div className="h-9 w-9 rounded-full mx-auto mb-2 flex items-center justify-center text-white text-xs font-bold" style={{ background: 'var(--odoo-teal)' }}>
+                  <User className="h-4 w-4" />
+                </div>
+                <span className="text-sm font-medium block" style={{ color: 'var(--odoo-text)' }}>Employee</span>
+                <span className="text-[11px]" style={{ color: 'var(--odoo-text-muted)' }}>John Doe</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickLogin('bob@adamas.com')}
-                className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-700 bg-slate-750 hover:bg-slate-700 text-slate-200 transition-colors hover:border-indigo-500/50"
+                className="bg-white border rounded-lg p-3 text-center hover:shadow transition-shadow cursor-pointer"
+                style={{ borderColor: 'var(--odoo-border)' }}
               >
-                <span className="text-sm font-semibold">Demo Admin</span>
-                <span className="text-[10px] text-slate-400">Bob Johnson</span>
+                <div className="h-9 w-9 rounded-full mx-auto mb-2 flex items-center justify-center text-white text-xs font-bold" style={{ background: 'var(--odoo-purple)' }}>
+                  <User className="h-4 w-4" />
+                </div>
+                <span className="text-sm font-medium block" style={{ color: 'var(--odoo-text)' }}>Admin</span>
+                <span className="text-[11px]" style={{ color: 'var(--odoo-text-muted)' }}>Bob Johnson</span>
               </button>
             </div>
           </div>
-
         </div>
       </div>
     </div>

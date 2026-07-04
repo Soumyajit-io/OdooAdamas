@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useHRMS } from '../../context/HRMSContext';
-import { DollarSign, Printer, Download, Cpu, Coins, FileText, CheckCircle } from 'lucide-react';
+import { Printer, Cpu, FileText, CheckCircle, ArrowRight } from 'lucide-react';
 
 export default function Payroll() {
   const { currentUser, payrollSlips, processPayroll } = useHRMS();
@@ -8,93 +8,70 @@ export default function Payroll() {
   const [adminMsg, setAdminMsg] = useState('');
 
   const isEmployee = currentUser?.role === 'Employee';
-
-  // Filter slips
   const mySlips = payrollSlips.filter(slip => slip.employeeId === currentUser?.id);
   const allSlips = payrollSlips;
+  const displaySlips = isEmployee ? mySlips : allSlips;
 
   const handleProcessPayroll = () => {
     setAdminMsg('');
     const res = processPayroll();
-    if (res.success) {
-      setAdminMsg({ type: 'success', text: `Successfully processed payroll! ${res.count} payslips generated for this month.` });
-    } else {
-      setAdminMsg({ type: 'error', text: res.message });
-    }
-  };
-
-  const handlePrint = () => {
-    window.print();
+    if (res.success) setAdminMsg({ type: 'success', text: `Payroll processed! ${res.count} payslips generated.` });
+    else setAdminMsg({ type: 'error', text: res.message });
   };
 
   return (
-    <div className="space-y-8 animate-fade-in print:bg-white print:p-0">
-      {/* Header - Hidden on Print */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 print:hidden">
+    <div className="space-y-6 odoo-fade-in print:space-y-4">
+      {/* Header */}
+      <div className="o-card p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 no-print">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Payroll Center</h2>
-          <p className="text-slate-500 text-sm mt-1">
-            {isEmployee
-              ? 'View monthly compensation statements and download payslips.'
-              : 'Generate, manage, and review payroll for all registered employees.'
-            }
+          <h2 className="text-lg font-bold" style={{ color: 'var(--odoo-text)' }}>Payroll</h2>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--odoo-text-muted)' }}>
+            {isEmployee ? 'View and download your salary statements.' : 'Process payroll and review compensation records.'}
           </p>
         </div>
-
         {!isEmployee && (
-          <button
-            onClick={handleProcessPayroll}
-            className="self-start sm:self-center flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-4 rounded-xl text-sm shadow-md hover:shadow-indigo-600/10 transition-all shrink-0"
-          >
-            <Cpu className="h-4 w-4" /> Run Payroll Processing
+          <button onClick={handleProcessPayroll} className="o-btn-primary shrink-0">
+            <Cpu className="h-4 w-4" /> Process Payroll
           </button>
         )}
       </div>
 
       {adminMsg && (
-        <div className={`p-4 rounded-xl text-sm font-semibold print:hidden ${
-          adminMsg.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+        <div className={`p-3 rounded border text-sm no-print ${
+          adminMsg.type === 'success' ? 'o-badge-success' : 'o-badge-danger'
         }`}>
           {adminMsg.text}
         </div>
       )}
 
-      {/* Main Layout Grid */}
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 print:block">
-        
-        {/* Left Panel: Payslip History List (Hidden on Print) */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden lg:col-span-1 print:hidden">
-          <div className="px-6 py-5 border-b border-slate-100">
-            <h3 className="font-semibold text-slate-800">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 print:block">
+        {/* Payslip list */}
+        <div className="o-card overflow-hidden lg:col-span-1 no-print">
+          <div className="px-5 py-4 border-b" style={{ borderColor: 'var(--odoo-border-light)' }}>
+            <h3 className="font-bold text-[15px]" style={{ color: 'var(--odoo-text)' }}>
               {isEmployee ? 'My Payslips' : 'All Payslips'}
             </h3>
           </div>
-
-          <div className="divide-y divide-slate-100 max-h-[500px] overflow-y-auto">
-            {(isEmployee ? mySlips : allSlips).length === 0 ? (
-              <div className="p-8 text-center text-slate-400">
-                <Coins className="h-10 w-10 mx-auto mb-2 text-slate-300" />
-                <p className="text-sm font-medium">No payslips found.</p>
-              </div>
+          <div className="divide-y max-h-[500px] overflow-y-auto" style={{ borderColor: 'var(--odoo-border-light)' }}>
+            {displaySlips.length === 0 ? (
+              <div className="p-8 text-center text-sm" style={{ color: 'var(--odoo-text-muted)' }}>No payslips found.</div>
             ) : (
-              (isEmployee ? mySlips : allSlips).map((slip) => (
+              displaySlips.map((slip) => (
                 <button
                   key={slip.id}
                   onClick={() => setSelectedSlip(slip)}
-                  className={`w-full text-left p-5 hover:bg-slate-50 flex items-center justify-between transition-colors ${
-                    selectedSlip?.id === slip.id ? 'bg-indigo-50/50 border-r-4 border-indigo-600' : ''
+                  className={`w-full text-left p-4 hover:bg-gray-50 transition-colors flex items-center justify-between ${
+                    selectedSlip?.id === slip.id ? 'border-l-3' : ''
                   }`}
+                  style={selectedSlip?.id === slip.id ? { borderLeftColor: 'var(--odoo-purple)', background: 'var(--odoo-purple-50)' } : {}}
                 >
-                  <div className="space-y-1">
-                    <span className="text-xs font-semibold text-slate-400 uppercase">{slip.month}</span>
-                    <h4 className="font-bold text-slate-800">${slip.net.toLocaleString()}</h4>
-                    {!isEmployee && (
-                      <p className="text-xs text-slate-500 font-medium">Emp: {slip.employeeName}</p>
-                    )}
+                  <div>
+                    <span className="text-xs font-medium" style={{ color: 'var(--odoo-text-muted)' }}>{slip.month}</span>
+                    <p className="font-bold text-sm" style={{ color: 'var(--odoo-text)' }}>${slip.net.toLocaleString()}</p>
+                    {!isEmployee && <p className="text-[11px]" style={{ color: 'var(--odoo-text-muted)' }}>{slip.employeeName}</p>}
                   </div>
-                  
-                  <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase">
-                    <CheckCircle className="h-3 w-3" /> {slip.status}
+                  <span className="o-badge o-badge-success text-[11px]">
+                    <CheckCircle className="h-3 w-3 mr-1" />{slip.status}
                   </span>
                 </button>
               ))
@@ -102,109 +79,90 @@ export default function Payroll() {
           </div>
         </div>
 
-        {/* Right Panel: Selected Payslip Detailed Statement */}
-        <div className="lg:col-span-2 print:col-span-3">
+        {/* Payslip detail */}
+        <div className="lg:col-span-2">
           {selectedSlip ? (
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 md:p-8 space-y-8 relative print:border-none print:shadow-none">
-              
-              {/* Statement Header */}
-              <div className="flex justify-between items-start border-b border-slate-100 pb-5">
-                <div className="space-y-1">
-                  <span className="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
-                    Payslip Statement
-                  </span>
-                  <h3 className="text-xl font-bold text-slate-800 mt-2">Adamas Consulting Corp</h3>
-                  <p className="text-xs text-slate-400">Statement for: {selectedSlip.month}</p>
+            <div className="o-card p-6 space-y-6">
+              {/* Statement header */}
+              <div className="flex items-start justify-between border-b pb-4" style={{ borderColor: 'var(--odoo-border-light)' }}>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="h-8 w-8 rounded flex items-center justify-center text-white font-bold text-sm" style={{ background: 'var(--odoo-purple)' }}>A</div>
+                    <span className="font-bold text-lg" style={{ color: 'var(--odoo-text)' }}>Adamas Consulting</span>
+                  </div>
+                  <p className="text-xs" style={{ color: 'var(--odoo-text-muted)' }}>Salary Statement — {selectedSlip.month}</p>
                 </div>
-                
-                {/* Print button (Hidden on Print) */}
-                <div className="flex gap-2 print:hidden">
-                  <button
-                    onClick={handlePrint}
-                    className="p-2 border border-slate-200 rounded-lg text-slate-500 hover:bg-slate-50 transition-colors"
-                    title="Print Payslip"
-                  >
-                    <Printer className="h-4 w-4" />
-                  </button>
-                </div>
+                <button onClick={() => window.print()} className="o-btn-secondary text-xs no-print">
+                  <Printer className="h-3.5 w-3.5" /> Print
+                </button>
               </div>
 
-              {/* Employee & Payout Details */}
-              <div className="grid grid-cols-2 gap-6 text-sm">
+              {/* Employee info */}
+              <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <span className="text-xs font-semibold text-slate-400 uppercase block mb-1">Employee Details</span>
-                  <p className="font-bold text-slate-800">{selectedSlip.employeeName}</p>
-                  <p className="text-xs text-slate-500">ID: {selectedSlip.employeeId}</p>
+                  <p className="text-xs font-medium mb-1" style={{ color: 'var(--odoo-text-muted)' }}>Employee</p>
+                  <p className="font-bold" style={{ color: 'var(--odoo-text)' }}>{selectedSlip.employeeName}</p>
+                  <p className="text-xs" style={{ color: 'var(--odoo-text-muted)' }}>ID: {selectedSlip.employeeId}</p>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs font-semibold text-slate-400 uppercase block mb-1">Transaction Status</span>
-                  <p className="font-bold text-emerald-600 uppercase text-xs flex items-center justify-end gap-1.5 mt-1">
-                    <CheckCircle className="h-4 w-4" /> Paid
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">Processed: {selectedSlip.processedDate}</p>
+                  <p className="text-xs font-medium mb-1" style={{ color: 'var(--odoo-text-muted)' }}>Status</p>
+                  <span className="o-badge o-badge-success">Paid</span>
+                  <p className="text-xs mt-1" style={{ color: 'var(--odoo-text-muted)' }}>Processed: {selectedSlip.processedDate}</p>
                 </div>
               </div>
 
-              {/* Breakdown Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-                
-                {/* Earnings */}
-                <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase border-b border-slate-100 pb-2">Earnings</h4>
-                  
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Basic Salary</span>
-                    <span className="font-semibold text-slate-800">${selectedSlip.basic.toLocaleString()}</span>
-                  </div>
-                  
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">House Rent Allowance (HRA)</span>
-                    <span className="font-semibold text-slate-800">${selectedSlip.hra.toLocaleString()}</span>
-                  </div>
-
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Special Allowance</span>
-                    <span className="font-semibold text-slate-800">${selectedSlip.allowance.toLocaleString()}</span>
-                  </div>
-                </div>
-
-                {/* Deductions */}
-                <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase border-b border-slate-100 pb-2">Deductions</h4>
-                  
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Provident Fund (PF)</span>
-                    <span className="font-semibold text-slate-800">-${selectedSlip.pf.toLocaleString()}</span>
-                  </div>
-
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Professional Tax</span>
-                    <span className="font-semibold text-slate-800">-${selectedSlip.tax.toLocaleString()}</span>
-                  </div>
-                </div>
-
+              {/* Breakdown table */}
+              <div className="border rounded-lg overflow-hidden" style={{ borderColor: 'var(--odoo-border)' }}>
+                <table className="o-table">
+                  <thead>
+                    <tr>
+                      <th>Component</th>
+                      <th className="text-right">Amount ($)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="font-medium" style={{ color: 'var(--odoo-text)' }}>Basic Salary</td>
+                      <td className="text-right font-medium">{selectedSlip.basic.toLocaleString()}</td>
+                    </tr>
+                    <tr>
+                      <td className="font-medium" style={{ color: 'var(--odoo-text)' }}>House Rent Allowance</td>
+                      <td className="text-right font-medium">{selectedSlip.hra.toLocaleString()}</td>
+                    </tr>
+                    <tr>
+                      <td className="font-medium" style={{ color: 'var(--odoo-text)' }}>Special Allowance</td>
+                      <td className="text-right font-medium">{selectedSlip.allowance.toLocaleString()}</td>
+                    </tr>
+                    <tr style={{ background: '#FEF3F2' }}>
+                      <td className="font-medium" style={{ color: 'var(--odoo-danger)' }}>Provident Fund (PF)</td>
+                      <td className="text-right font-medium" style={{ color: 'var(--odoo-danger)' }}>-{selectedSlip.pf.toLocaleString()}</td>
+                    </tr>
+                    <tr style={{ background: '#FEF3F2' }}>
+                      <td className="font-medium" style={{ color: 'var(--odoo-danger)' }}>Professional Tax</td>
+                      <td className="text-right font-medium" style={{ color: 'var(--odoo-danger)' }}>-{selectedSlip.tax.toLocaleString()}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
 
-              {/* Summary net payout */}
-              <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 flex items-center justify-between">
-                <div className="space-y-1">
-                  <span className="text-xs text-slate-400 uppercase font-bold">Net Payout Amount</span>
-                  <p className="text-xs text-slate-500">Credited to employee bank account</p>
+              {/* Net Total */}
+              <div className="flex items-center justify-between p-4 rounded-lg" style={{ background: 'var(--odoo-purple-50)', border: '1px solid var(--odoo-purple-muted)' }}>
+                <div>
+                  <span className="text-xs font-medium" style={{ color: 'var(--odoo-text-muted)' }}>Net Payout</span>
+                  <p className="text-xs" style={{ color: 'var(--odoo-text-muted)' }}>Credited to bank account</p>
                 </div>
-                <div className="text-2xl md:text-3xl font-extrabold text-indigo-600">
+                <span className="text-2xl font-bold" style={{ color: 'var(--odoo-purple)' }}>
                   ${selectedSlip.net.toLocaleString()}
-                </div>
+                </span>
               </div>
-
             </div>
           ) : (
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-12 text-center text-slate-400 flex flex-col items-center justify-center min-h-[300px]">
-              <FileText className="h-12 w-12 text-slate-300 mb-3" />
-              <p className="text-sm font-medium">Select a payslip from the history to view full statement.</p>
+            <div className="o-card p-12 text-center" style={{ color: 'var(--odoo-text-muted)' }}>
+              <FileText className="h-10 w-10 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">Select a payslip to view the full statement.</p>
             </div>
           )}
         </div>
-
       </div>
     </div>
   );

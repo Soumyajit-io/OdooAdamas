@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { HRMSProvider, useHRMS } from './context/HRMSContext';
 
-// Import Pages
 import Login from './pages/Auth/Login';
 import Signup from './pages/Auth/Signup';
 import AdminDashboard from './pages/Dashboard/AdminDashboard';
@@ -12,7 +11,6 @@ import LeavePage from './pages/Leave/LeavePage';
 import Payroll from './pages/Payroll/Payroll';
 import Profile from './pages/Profile/Profile';
 
-// Import Icons
 import {
   LayoutDashboard,
   Clock,
@@ -23,133 +21,174 @@ import {
   Menu,
   X,
   Bell,
-  Briefcase
+  ChevronDown,
+  Search,
+  Settings,
+  HelpCircle,
+  Home
 } from 'lucide-react';
 
 function ProtectedRoute({ children }) {
   const { currentUser } = useHRMS();
-  if (!currentUser) {
-    return <Navigate to="/login" replace />;
-  }
+  if (!currentUser) return <Navigate to="/login" replace />;
   return children;
 }
 
 function MainLayout() {
   const { currentUser, logout } = useHRMS();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     ...(currentUser?.role === 'Employee' ? [{ name: 'Attendance', href: '/attendance', icon: Clock }] : []),
-    { name: 'Leaves', href: '/leaves', icon: CalendarDays },
+    { name: 'Time Off', href: '/leaves', icon: CalendarDays },
     { name: 'Payroll', href: '/payroll', icon: CreditCard },
-    { name: 'Profile', href: '/profile', icon: User },
+    { name: 'My Profile', href: '/profile', icon: User },
   ];
 
+  const currentPage = navigation.find(item => item.href === location.pathname)?.name || 'Dashboard';
+
   return (
-    <div className="min-h-screen bg-slate-50 flex">
-      {/* Mobile Sidebar overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar Component */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 transform transition-transform duration-300 lg:translate-x-0 lg:static lg:flex-shrink-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800">
-          <div className="flex items-center gap-2">
-            <div className="bg-indigo-600 p-2 rounded-lg text-white">
-              <Briefcase className="h-5 w-5" />
-            </div>
-            <span className="font-bold text-lg text-white tracking-wide">Adamas HRMS</span>
-          </div>
-          <button className="lg:hidden text-slate-400 hover:text-white" onClick={() => setSidebarOpen(false)}>
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <nav className="mt-6 px-4 space-y-1">
-          {navigation.map((item) => {
-            const isActive = location.pathname === item.href;
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-                  isActive
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                    : 'hover:bg-slate-800 hover:text-white'
-                }`}
-                onClick={() => setSidebarOpen(false)}
-              >
-                <Icon className="h-5 w-5" />
-                {item.name}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="absolute bottom-0 w-64 p-4 border-t border-slate-800">
-          <div className="flex items-center gap-3 px-2 mb-4">
-            <div className="h-10 w-10 rounded-full bg-slate-700 flex items-center justify-center font-bold text-white uppercase">
-              {currentUser?.name.charAt(0)}
-            </div>
-            <div className="overflow-hidden">
-              <p className="font-medium text-white truncate text-sm">{currentUser?.name}</p>
-              <p className="text-xs text-slate-400 truncate">{currentUser?.role}</p>
-            </div>
-          </div>
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--odoo-bg)' }}>
+      {/* ===== ODOO TOP NAVBAR ===== */}
+      <nav className="h-[46px] flex items-center justify-between px-3 shrink-0 no-print" style={{ background: 'var(--odoo-nav)', color: '#fff' }}>
+        {/* Left side: Menu toggle + Brand + Nav links */}
+        <div className="flex items-center gap-1">
+          {/* Hamburger for mobile */}
           <button
-            onClick={logout}
-            className="flex w-full items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors"
+            className="lg:hidden p-1.5 rounded hover:bg-white/10 transition-colors"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            <LogOut className="h-4 w-4" />
-            Sign Out
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
-        </div>
-      </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Header */}
-        <header className="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6 sticky top-0 z-30">
-          <div className="flex items-center gap-4">
-            <button 
-              className="lg:hidden text-slate-500 hover:text-slate-700"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="h-6 w-6" />
-            </button>
-            <h1 className="text-xl font-semibold text-slate-800 hidden sm:block">
-              {navigation.find(item => item.href === location.pathname)?.name || 'HRMS'}
-            </h1>
+          {/* Brand */}
+          <Link to="/dashboard" className="flex items-center gap-2 px-2 py-1 rounded hover:bg-white/10 transition-colors mr-1">
+            <div className="h-7 w-7 rounded flex items-center justify-center font-black text-sm" style={{ background: 'var(--odoo-purple)' }}>
+              A
+            </div>
+            <span className="font-bold text-[15px] hidden sm:block tracking-tight">Adamas</span>
+          </Link>
+
+          {/* Desktop nav links */}
+          <div className="hidden lg:flex items-center">
+            {navigation.map((item) => {
+              const isActive = location.pathname === item.href;
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-[13px] font-medium transition-colors ${
+                    isActive
+                      ? 'bg-white/15 text-white'
+                      : 'text-white/70 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.name}
+                </Link>
+              );
+            })}
           </div>
+        </div>
 
-          <div className="flex items-center gap-4">
-            {/* Notification bell */}
-            <button className="text-slate-400 hover:text-slate-600 relative p-1 rounded-full hover:bg-slate-100 transition-colors">
-              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></span>
-              <Bell className="h-5 w-5" />
-            </button>
+        {/* Right side: Search + User menu */}
+        <div className="flex items-center gap-2">
+          {/* Notification */}
+          <button className="relative p-1.5 rounded hover:bg-white/10 transition-colors text-white/70 hover:text-white">
+            <Bell className="h-[18px] w-[18px]" />
+            <span className="absolute top-0.5 right-0.5 h-2 w-2 rounded-full" style={{ background: 'var(--odoo-teal)' }}></span>
+          </button>
 
-            <div className="h-8 w-px bg-slate-200"></div>
-
-            {/* Quick Profile */}
-            <Link to="/profile" className="flex items-center gap-2 hover:opacity-85 transition-opacity">
-              <div className="h-8 w-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm uppercase">
+          {/* User dropdown */}
+          <div className="relative">
+            <button
+              className="flex items-center gap-2 px-2 py-1 rounded hover:bg-white/10 transition-colors"
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+            >
+              <div className="h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs text-white" style={{ background: 'var(--odoo-purple)' }}>
                 {currentUser?.name.charAt(0)}
               </div>
-              <span className="text-sm font-medium text-slate-700 hidden sm:block">{currentUser?.name}</span>
-            </Link>
-          </div>
-        </header>
+              <span className="text-[13px] font-medium hidden sm:block">{currentUser?.name}</span>
+              <ChevronDown className="h-3.5 w-3.5 text-white/50" />
+            </button>
 
-        {/* Page Body */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8">
+            {userMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
+                <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-xl border z-50 py-1 odoo-scale-in" style={{ borderColor: 'var(--odoo-border)' }}>
+                  <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--odoo-border-light)' }}>
+                    <p className="text-sm font-medium" style={{ color: 'var(--odoo-text)' }}>{currentUser?.name}</p>
+                    <p className="text-xs" style={{ color: 'var(--odoo-text-muted)' }}>{currentUser?.email}</p>
+                  </div>
+                  <Link
+                    to="/profile"
+                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
+                    style={{ color: 'var(--odoo-text)' }}
+                    onClick={() => setUserMenuOpen(false)}
+                  >
+                    <Settings className="h-4 w-4" style={{ color: 'var(--odoo-text-muted)' }} /> My Profile
+                  </Link>
+                  <button
+                    onClick={() => { logout(); setUserMenuOpen(false); }}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-red-50 transition-colors text-red-600"
+                  >
+                    <LogOut className="h-4 w-4" /> Log Out
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </nav>
+
+      {/* Mobile nav dropdown */}
+      {mobileMenuOpen && (
+        <>
+          <div className="fixed inset-0 z-30 bg-black/20 lg:hidden" onClick={() => setMobileMenuOpen(false)} />
+          <div className="absolute top-[46px] left-0 right-0 z-40 bg-white border-b shadow-lg lg:hidden odoo-slide-in" style={{ borderColor: 'var(--odoo-border)' }}>
+            <div className="p-2 space-y-0.5">
+              {navigation.map((item) => {
+                const isActive = location.pathname === item.href;
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'text-white'
+                        : 'hover:bg-gray-50'
+                    }`}
+                    style={isActive ? { background: 'var(--odoo-purple)', color: '#fff' } : { color: 'var(--odoo-text)' }}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ===== BREADCRUMB BAR ===== */}
+      <div className="h-[40px] flex items-center px-4 bg-white border-b no-print" style={{ borderColor: 'var(--odoo-border-light)' }}>
+        <div className="flex items-center gap-1.5 text-sm">
+          <Home className="h-3.5 w-3.5" style={{ color: 'var(--odoo-text-muted)' }} />
+          <span style={{ color: 'var(--odoo-text-muted)' }}>/</span>
+          <span className="font-medium" style={{ color: 'var(--odoo-purple)' }}>{currentPage}</span>
+        </div>
+      </div>
+
+      {/* ===== PAGE CONTENT ===== */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="max-w-[1400px] mx-auto p-4 md:p-6">
           <Routes>
             <Route path="/dashboard" element={
               currentUser?.role === 'Admin' ? <AdminDashboard /> : <EmployeeDashboard />
@@ -162,8 +201,8 @@ function MainLayout() {
             <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

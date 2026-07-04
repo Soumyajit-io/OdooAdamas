@@ -1,257 +1,237 @@
 import { useState, useEffect } from 'react';
 import { useHRMS } from '../../context/HRMSContext';
-import { Clock, Calendar, ShieldCheck, HeartPulse, Sparkles, Send, CheckCircle2, Clock3 } from 'lucide-react';
+import { Clock, Calendar, Send, Clock3, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function EmployeeDashboard() {
-  const { currentUser, attendanceLogs, leaveRequests, clockIn, clockOut } = useHRMS();
+  const { currentUser, attendanceLogs, leaveRequests, payrollSlips, clockIn, clockOut } = useHRMS();
   const [time, setTime] = useState(new Date());
   const [clockMsg, setClockMsg] = useState({ type: '', text: '' });
 
-  // Update clock every second
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
   const todayStr = new Date().toISOString().split('T')[0];
-  
-  // Find current day's log
   const todayLog = attendanceLogs.find(log => log.employeeId === currentUser.id && log.date === todayStr);
   const isClockedIn = todayLog && todayLog.checkIn && !todayLog.checkOut;
   const isClockedOut = todayLog && todayLog.checkOut;
 
-  // Filter logs for this employee
-  const myAttendance = attendanceLogs.filter(log => log.employeeId === currentUser.id).slice(0, 3);
-  const myLeaves = leaveRequests.filter(req => req.employeeId === currentUser.id).slice(0, 3);
+  const myAttendance = attendanceLogs.filter(log => log.employeeId === currentUser.id).slice(0, 5);
+  const myLeaves = leaveRequests.filter(req => req.employeeId === currentUser.id).slice(0, 4);
+  const myLatestSlip = payrollSlips.filter(s => s.employeeId === currentUser.id).sort((a, b) => b.processedDate?.localeCompare(a.processedDate))[0];
 
   const handleClockToggle = () => {
     setClockMsg({ type: '', text: '' });
     if (!isClockedIn) {
       const res = clockIn();
-      if (res.success) {
-        setClockMsg({ type: 'success', text: `Successfully Clocked In at ${res.log.checkIn}!` });
-      } else {
-        setClockMsg({ type: 'error', text: res.message });
-      }
+      if (res.success) setClockMsg({ type: 'success', text: `Checked in at ${res.log.checkIn}` });
+      else setClockMsg({ type: 'error', text: res.message });
     } else {
       const res = clockOut();
-      if (res.success) {
-        setClockMsg({ type: 'success', text: 'Successfully Clocked Out!' });
-      } else {
-        setClockMsg({ type: 'error', text: res.message });
-      }
+      if (res.success) setClockMsg({ type: 'success', text: 'Checked out successfully' });
+      else setClockMsg({ type: 'error', text: res.message });
     }
   };
 
-  // Mock leave balance calculations
-  const approvedLeavesCount = leaveRequests
+  // Leave balance mock
+  const approvedDays = leaveRequests
     .filter(req => req.employeeId === currentUser.id && req.status === 'Approved')
     .reduce((acc, curr) => {
-      const start = new Date(curr.startDate);
-      const end = new Date(curr.endDate);
-      const diffTime = Math.abs(end - start);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-      return acc + diffDays;
+      const days = Math.ceil(Math.abs(new Date(curr.endDate) - new Date(curr.startDate)) / (1000 * 60 * 60 * 24)) + 1;
+      return acc + days;
     }, 0);
 
   const balances = [
-    { name: 'Sick Leave', remaining: Math.max(0, 10 - approvedLeavesCount), total: 10, color: 'text-rose-600', bgColor: 'bg-rose-50' },
-    { name: 'Casual Leave', remaining: 8, total: 8, color: 'text-amber-600', bgColor: 'bg-amber-50' },
-    { name: 'Paid Annual Leave', remaining: 15, total: 15, color: 'text-emerald-600', bgColor: 'bg-emerald-50' }
+    { name: 'Sick Leave', used: Math.min(approvedDays, 10), total: 10 },
+    { name: 'Casual Leave', used: 0, total: 8 },
+    { name: 'Paid Leave', used: 0, total: 15 },
   ];
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-slate-800 to-indigo-950 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl translate-x-1/3 -translate-y-1/3"></div>
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="max-w-xl space-y-2">
-            <span className="bg-indigo-500/30 text-indigo-200 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider inline-flex items-center gap-1.5">
-              <Sparkles className="h-3 w-3" /> Dashboard Cockpit
-            </span>
-            <h2 className="text-2xl md:text-3xl font-bold mt-2">Hello, {currentUser?.name}!</h2>
-            <p className="text-slate-300 text-sm md:text-base">
-              You are signed in as a <strong className="text-white">{currentUser?.jobTitle}</strong> in the <strong className="text-white">{currentUser?.department}</strong> department.
-            </p>
-          </div>
-          
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex flex-col items-center shrink-0">
-            <span className="text-xs text-indigo-200 uppercase tracking-widest font-semibold">Today's Date</span>
-            <span className="text-xl font-bold mt-1">
-              {time.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
-            </span>
-          </div>
+    <div className="space-y-6 odoo-fade-in">
+      {/* Welcome bar */}
+      <div className="o-card p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-bold" style={{ color: 'var(--odoo-text)' }}>
+            Welcome back, {currentUser?.name}
+          </h2>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--odoo-text-muted)' }}>
+            {currentUser?.jobTitle} · {currentUser?.department} Department
+          </p>
         </div>
+        <span className="o-badge o-badge-purple">
+          {time.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+        </span>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        {/* Clock In/Out card */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col items-center justify-center text-center space-y-4">
-          <div className="bg-slate-50 p-4 rounded-full border border-slate-100">
-            <Clock className="h-10 w-10 text-indigo-600 animate-pulse-slow" />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Clock In / Out Card */}
+        <div className="o-card p-6 flex flex-col items-center text-center">
+          <div className="h-14 w-14 rounded-full flex items-center justify-center mb-3" style={{ background: 'var(--odoo-purple-muted)', color: 'var(--odoo-purple)' }}>
+            <Clock className="h-7 w-7" />
           </div>
-          
-          <div className="space-y-1">
-            <h3 className="text-3xl font-bold text-slate-800 tracking-tight">
-              {time.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-            </h3>
-            <p className="text-xs text-slate-400 font-medium">Local workspace time</p>
-          </div>
+          <p className="text-3xl font-bold tracking-tight" style={{ color: 'var(--odoo-text)' }}>
+            {time.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+          </p>
+          <p className="text-xs mt-1 mb-4" style={{ color: 'var(--odoo-text-muted)' }}>Current Time</p>
 
-          <div className="w-full pt-2">
-            <button
-              onClick={handleClockToggle}
-              disabled={isClockedOut}
-              className={`w-full py-3.5 px-4 rounded-xl font-semibold text-sm shadow-md transition-all duration-200 flex items-center justify-center gap-2 ${
-                isClockedOut
-                  ? 'bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-                  : isClockedIn
-                  ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/10'
-                  : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/10'
-              }`}
-            >
-              {isClockedOut ? 'Clocked Out for Today' : isClockedIn ? 'Clock Out' : 'Clock In'}
-            </button>
-          </div>
+          <button
+            onClick={handleClockToggle}
+            disabled={isClockedOut}
+            className={`w-full py-2.5 rounded font-medium text-sm transition-all ${
+              isClockedOut
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                : isClockedIn
+                ? 'text-white'
+                : ''
+            }`}
+            style={
+              isClockedOut ? {} :
+              isClockedIn ? { background: 'var(--odoo-danger)', color: '#fff' } :
+              { background: 'var(--odoo-teal)', color: '#fff' }
+            }
+          >
+            {isClockedOut ? '✓ Completed for Today' : isClockedIn ? 'Check Out' : 'Check In'}
+          </button>
 
           {clockMsg.text && (
-            <p className={`text-xs font-semibold text-center py-1.5 px-3 rounded-lg ${
-              clockMsg.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+            <p className={`mt-3 text-xs font-medium px-3 py-1.5 rounded ${
+              clockMsg.type === 'success' ? 'o-badge-success' : 'o-badge-danger'
             }`}>
               {clockMsg.text}
             </p>
           )}
 
-          <div className="w-full grid grid-cols-2 gap-4 border-t border-slate-100 pt-4 text-left">
+          <div className="w-full grid grid-cols-2 gap-4 border-t pt-4 mt-4 text-left" style={{ borderColor: 'var(--odoo-border-light)' }}>
             <div>
-              <span className="text-[10px] text-slate-400 uppercase font-semibold">Check-in</span>
-              <p className="text-sm font-bold text-slate-700">{todayLog?.checkIn || '--:--'}</p>
+              <span className="text-[11px] font-medium" style={{ color: 'var(--odoo-text-muted)' }}>Check In</span>
+              <p className="text-sm font-bold" style={{ color: 'var(--odoo-text)' }}>{todayLog?.checkIn || '—'}</p>
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 uppercase font-semibold">Check-out</span>
-              <p className="text-sm font-bold text-slate-700">{todayLog?.checkOut || '--:--'}</p>
+              <span className="text-[11px] font-medium" style={{ color: 'var(--odoo-text-muted)' }}>Check Out</span>
+              <p className="text-sm font-bold" style={{ color: 'var(--odoo-text)' }}>{todayLog?.checkOut || '—'}</p>
             </div>
           </div>
         </div>
 
-        {/* Leave Balances */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col justify-between">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="font-semibold text-slate-800">Leave Balance</h3>
-            <Link to="/leaves" className="text-xs font-semibold text-indigo-600 hover:text-indigo-500 flex items-center gap-1">
-              Request Leave <Send className="h-3 w-3" />
+        {/* Leave Balance */}
+        <div className="lg:col-span-2 o-card p-5">
+          <div className="flex items-center justify-between border-b pb-3 mb-4" style={{ borderColor: 'var(--odoo-border-light)' }}>
+            <h3 className="font-bold text-[15px]" style={{ color: 'var(--odoo-text)' }}>Leave Allocation</h3>
+            <Link to="/leaves" className="text-xs font-medium flex items-center gap-1 hover:underline" style={{ color: 'var(--odoo-purple)' }}>
+              Request Leave <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-4">
-            {balances.map((bal) => (
-              <div key={bal.name} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex flex-col justify-between">
-                <div>
-                  <span className="text-xs text-slate-400 font-semibold uppercase">{bal.name}</span>
-                  <div className="text-2xl font-extrabold text-slate-800 mt-1">
-                    {bal.remaining} <span className="text-sm font-medium text-slate-400">/ {bal.total}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {balances.map((bal) => {
+              const remaining = bal.total - bal.used;
+              const pct = (remaining / bal.total) * 100;
+              return (
+                <div key={bal.name} className="p-4 rounded-lg border" style={{ borderColor: 'var(--odoo-border-light)', background: '#FAFAFA' }}>
+                  <p className="text-xs font-medium mb-2" style={{ color: 'var(--odoo-text-muted)' }}>{bal.name}</p>
+                  <p className="text-2xl font-bold" style={{ color: 'var(--odoo-text)' }}>
+                    {remaining} <span className="text-sm font-normal" style={{ color: 'var(--odoo-text-muted)' }}>/ {bal.total}</span>
+                  </p>
+                  <div className="w-full rounded-full h-1.5 mt-3" style={{ background: 'var(--odoo-border)' }}>
+                    <div className="h-1.5 rounded-full" style={{ width: `${pct}%`, background: 'var(--odoo-teal)' }}></div>
                   </div>
                 </div>
-                <div className="mt-3 w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full rounded-full ${
-                      bal.name.includes('Sick') ? 'bg-rose-500' : bal.name.includes('Casual') ? 'bg-amber-500' : 'bg-emerald-500'
-                    }`} 
-                    style={{ width: `${(bal.remaining / bal.total) * 100}%` }}
-                  ></div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-3 text-xs text-indigo-700 flex items-center gap-2">
-            <Sparkles className="h-4 w-4 shrink-0 text-indigo-500" />
-            <span>Need time off? Leave applications are routed instantly to managers.</span>
-          </div>
+          {/* Latest payslip snippet */}
+          {myLatestSlip && (
+            <div className="mt-4 p-3 rounded-lg border flex items-center justify-between" style={{ background: 'var(--odoo-purple-50)', borderColor: 'var(--odoo-purple-muted)' }}>
+              <div>
+                <span className="text-xs font-medium" style={{ color: 'var(--odoo-text-muted)' }}>Latest Payslip</span>
+                <p className="font-bold text-sm" style={{ color: 'var(--odoo-text)' }}>{myLatestSlip.month} — Net ${myLatestSlip.net.toLocaleString()}</p>
+              </div>
+              <Link to="/payroll" className="o-btn-secondary text-xs py-1.5 px-3">
+                View <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Tables and history */}
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+      {/* Bottom row: Recent attendance + Leave requests */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Recent Attendance */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-            <h3 className="font-semibold text-slate-800">Recent Attendance</h3>
-            <Link to="/attendance" className="text-xs font-semibold text-indigo-600 hover:text-indigo-500">
-              View Log
-            </Link>
+        <div className="o-card overflow-hidden">
+          <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'var(--odoo-border-light)' }}>
+            <h3 className="font-bold text-[15px]" style={{ color: 'var(--odoo-text)' }}>Recent Attendance</h3>
+            <Link to="/attendance" className="text-xs font-medium hover:underline" style={{ color: 'var(--odoo-purple)' }}>View All</Link>
           </div>
-
-          <div className="space-y-3">
-            {myAttendance.length === 0 ? (
-              <p className="text-sm text-slate-400 text-center py-6">No check-ins recorded yet.</p>
-            ) : (
-              myAttendance.map((log) => (
-                <div key={log.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
-                      <Clock3 className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <span className="text-sm font-semibold text-slate-800">{log.date}</span>
-                      <p className="text-xs text-slate-400">Worked: {log.hoursWorked}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-medium text-slate-600">{log.checkIn} - {log.checkOut || 'Active'}</span>
-                    <span className={`block text-[10px] font-semibold uppercase mt-0.5 ${
-                      log.status === 'On-time' ? 'text-emerald-600' : 'text-rose-600'
-                    }`}>{log.status}</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+          {myAttendance.length === 0 ? (
+            <div className="p-8 text-center text-sm" style={{ color: 'var(--odoo-text-muted)' }}>No records yet. Check in above!</div>
+          ) : (
+            <table className="o-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>In</th>
+                  <th>Out</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {myAttendance.map((log) => (
+                  <tr key={log.id}>
+                    <td className="font-medium">{log.date}</td>
+                    <td>{log.checkIn}</td>
+                    <td>{log.checkOut || <span style={{ color: 'var(--odoo-teal)' }}>Active</span>}</td>
+                    <td>
+                      <span className={`o-badge ${log.status === 'On-time' ? 'o-badge-success' : 'o-badge-danger'}`}>
+                        {log.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* Leave Requests */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-            <h3 className="font-semibold text-slate-800">Leave Requests</h3>
-            <Link to="/leaves" className="text-xs font-semibold text-indigo-600 hover:text-indigo-500">
-              Request Leaves
-            </Link>
+        <div className="o-card overflow-hidden">
+          <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: 'var(--odoo-border-light)' }}>
+            <h3 className="font-bold text-[15px]" style={{ color: 'var(--odoo-text)' }}>My Leave Requests</h3>
+            <Link to="/leaves" className="text-xs font-medium hover:underline" style={{ color: 'var(--odoo-purple)' }}>View All</Link>
           </div>
-
-          <div className="space-y-3">
-            {myLeaves.length === 0 ? (
-              <p className="text-sm text-slate-400 text-center py-6">No leave requests found.</p>
-            ) : (
-              myLeaves.map((req) => (
-                <div key={req.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
-                      <Calendar className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <span className="text-sm font-semibold text-slate-800">{req.type}</span>
-                      <p className="text-xs text-slate-400">
-                        {req.startDate} to {req.endDate}
-                      </p>
-                    </div>
-                  </div>
-                  <div>
-                    <span className={`inline-flex px-2.5 py-1 rounded text-xs font-semibold uppercase tracking-wider ${
-                      req.status === 'Approved'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : req.status === 'Rejected'
-                        ? 'bg-rose-100 text-rose-800'
-                        : 'bg-amber-100 text-amber-800'
-                    }`}>
-                      {req.status}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+          {myLeaves.length === 0 ? (
+            <div className="p-8 text-center text-sm" style={{ color: 'var(--odoo-text-muted)' }}>No leave requests found.</div>
+          ) : (
+            <table className="o-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Dates</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {myLeaves.map((req) => (
+                  <tr key={req.id}>
+                    <td className="font-medium">{req.type}</td>
+                    <td className="text-xs">{req.startDate} → {req.endDate}</td>
+                    <td>
+                      <span className={`o-badge ${
+                        req.status === 'Approved' ? 'o-badge-success' :
+                        req.status === 'Rejected' ? 'o-badge-danger' :
+                        'o-badge-warning'
+                      }`}>
+                        {req.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>

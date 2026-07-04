@@ -1,22 +1,64 @@
 @import "tailwindcss";
 
+/* ========================================
+   Odoo-Inspired Design System
+   ======================================== */
+
 :root {
+  /* Odoo Brand Colors */
+  --odoo-purple: #714B67;
+  --odoo-purple-dark: #5B3D54;
+  --odoo-purple-light: #8F6B85;
+  --odoo-purple-muted: #F3EDF2;
+  --odoo-purple-50: #FAF5F9;
+
+  /* Odoo Teal (CTA / Success accent) */
+  --odoo-teal: #00A09D;
+  --odoo-teal-dark: #008784;
+  --odoo-teal-light: #E6F7F7;
+
+  /* Navbar */
+  --odoo-nav: #21212E;
+  --odoo-nav-hover: #2C2C3D;
+
+  /* Neutrals */
+  --odoo-bg: #F0EEEE;
+  --odoo-surface: #FFFFFF;
+  --odoo-border: #DEE2E6;
+  --odoo-border-light: #E9ECEF;
+  --odoo-text: #212529;
+  --odoo-text-muted: #6C757D;
+  --odoo-text-light: #ADB5BD;
+
+  /* Status Colors */
+  --odoo-success: #28A745;
+  --odoo-warning: #FFC107;
+  --odoo-danger: #DC3545;
+  --odoo-info: #17A2B8;
+
   color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  background-color: #f8fafc;
-  color: #0f172a;
-  overflow-x: hidden;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--odoo-text);
+  background-color: var(--odoo-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom Scrollbar for sleek UI */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -24,39 +66,211 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: #CCC;
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #AAA;
 }
 
-/* Pulse animation for clocking in/out indicators */
-@keyframes pulse-slow {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.6;
-    transform: scale(1.05);
-  }
+/* Odoo-style Animations */
+@keyframes odoo-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.animate-pulse-slow {
-  animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+@keyframes odoo-slide-in {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
-/* Custom glassmorphism classes */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+@keyframes odoo-scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
-.glass-panel-dark {
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+.odoo-fade-in {
+  animation: odoo-fade-in 0.3s ease-out both;
+}
+
+.odoo-slide-in {
+  animation: odoo-slide-in 0.25s ease-out both;
+}
+
+.odoo-scale-in {
+  animation: odoo-scale-in 0.2s ease-out both;
+}
+
+/* Odoo Card */
+.o-card {
+  background: var(--odoo-surface);
+  border: 1px solid var(--odoo-border);
+  border-radius: 8px;
+  transition: box-shadow 0.2s ease;
+}
+
+.o-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Odoo Button variants */
+.o-btn-primary {
+  background-color: var(--odoo-purple);
+  color: #fff;
+  border: 1px solid var(--odoo-purple);
+  border-radius: 4px;
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.o-btn-primary:hover {
+  background-color: var(--odoo-purple-dark);
+  border-color: var(--odoo-purple-dark);
+}
+
+.o-btn-secondary {
+  background-color: #fff;
+  color: var(--odoo-purple);
+  border: 1px solid var(--odoo-purple);
+  border-radius: 4px;
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.o-btn-secondary:hover {
+  background-color: var(--odoo-purple-muted);
+}
+
+.o-btn-success {
+  background-color: var(--odoo-teal);
+  color: #fff;
+  border: 1px solid var(--odoo-teal);
+  border-radius: 4px;
+  padding: 6px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.o-btn-success:hover {
+  background-color: var(--odoo-teal-dark);
+  border-color: var(--odoo-teal-dark);
+}
+
+/* Odoo Form Input */
+.o-input {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--odoo-text);
+  background-color: #fff;
+  border: 1px solid var(--odoo-border);
+  border-radius: 4px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.o-input:focus {
+  outline: none;
+  border-color: var(--odoo-purple);
+  box-shadow: 0 0 0 3px rgba(113, 75, 103, 0.15);
+}
+
+.o-input::placeholder {
+  color: var(--odoo-text-light);
+}
+
+/* Odoo Badges */
+.o-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.o-badge-success {
+  background-color: #D4EDDA;
+  color: #155724;
+}
+
+.o-badge-warning {
+  background-color: #FFF3CD;
+  color: #856404;
+}
+
+.o-badge-danger {
+  background-color: #F8D7DA;
+  color: #721C24;
+}
+
+.o-badge-info {
+  background-color: #D1ECF1;
+  color: #0C5460;
+}
+
+.o-badge-purple {
+  background-color: var(--odoo-purple-muted);
+  color: var(--odoo-purple);
+}
+
+/* Odoo Table */
+.o-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.o-table th {
+  background: #F8F9FA;
+  border-bottom: 2px solid var(--odoo-border);
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 500;
+  color: var(--odoo-text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.o-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--odoo-border-light);
+  color: var(--odoo-text);
+  vertical-align: middle;
+}
+
+.o-table tbody tr {
+  transition: background-color 0.1s;
+}
+
+.o-table tbody tr:hover {
+  background-color: #F8F9FA;
+}
+
+/* Print Styles */
+@media print {
+  body { background: #fff !important; }
+  .no-print { display: none !important; }
 }
