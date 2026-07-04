@@ -1,0 +1,25 @@
+name: Lint and Format
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  lint-format:
+    name: Lint & Format Python
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Ruff Lint
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "check"
+
+      - name: Run Ruff Format
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "format --check"

@@ -1,10 +1,13 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional
 from enum import Enum
+from typing import Optional
+
+from pydantic import BaseModel, EmailStr
+
 
 class UserRole(str, Enum):
     ADMIN = "ADMIN"
     EMPLOYEE = "EMPLOYEE"
+
 
 class UserBasicInfo(BaseModel):
     id: str
@@ -14,6 +17,7 @@ class UserBasicInfo(BaseModel):
     email: EmailStr
     job_title: Optional[str] = None
     role: UserRole
+
 
 class UserResponse(BaseModel):
     id: str
@@ -27,9 +31,11 @@ class UserResponse(BaseModel):
     profile_picture_url: Optional[str] = None
     job_title: Optional[str] = None
 
+
 class UserUpdateSelf(BaseModel):
     phone: Optional[str] = None
     address: Optional[str] = None
+
 
 class UserUpdateAdmin(BaseModel):
     employee_id: Optional[str] = None
